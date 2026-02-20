@@ -19,6 +19,14 @@ const RACE_LABELS: Record<RaceType, string> = {
   custom: 'Custom afstand',
 }
 
+type WeekPhase = 'base' | 'build' | 'peak' | 'recovery' | 'taper' | 'race'
+
+interface WeekLoadProfile {
+  longRunFactor: number
+  volumeFactor: number
+  qualityFactor: number
+}
+
 function roundToHalf(value: number) {
   return Math.round(value * 2) / 2
 }
@@ -139,23 +147,137 @@ function getPeakLongRun(distanceKm: number, raceType: RaceType) {
   return clamp(roundToHalf(distanceKm * 0.75), 6, 34)
 }
 
-function weeklyFocus(week: number, totalWeeks: number) {
-  if (week === totalWeeks) {
-    return 'Raceweek: fris blijven, vertrouwen opbouwen en slim taperen.'
+function getTaperWeeks(raceType: RaceType, distanceKm: number, totalWeeks: number) {
+  let targetTaperWeeks = 1
+  if (raceType === 'marathon' || distanceKm >= 35) {
+    targetTaperWeeks = 3
+  } else if (raceType === 'half-marathon' || distanceKm >= 15) {
+    targetTaperWeeks = 2
   }
-  if (week >= totalWeeks - 1) {
-    return 'Taper: trainingsvolume terug, snelheid kort prikkelen, herstel maximaliseren.'
+
+  // Keep enough room for build and race weeks in short plans.
+  return clamp(targetTaperWeeks, 1, Math.max(1, totalWeeks - 2))
+}
+
+function weekPhaseFor(weekNumber: number, totalWeeks: number, taperWeeks: number): WeekPhase {
+  if (weekNumber === totalWeeks) {
+    return 'race'
   }
-  if (week % 4 === 0) {
+
+  const weeksToRace = totalWeeks - weekNumber
+  if (weeksToRace <= taperWeeks) {
+    return 'taper'
+  }
+
+  const peakBlockEnabled = totalWeeks >= 8
+  const peakStartWeek = Math.max(1, totalWeeks - taperWeeks - 3)
+  if (peakBlockEnabled && weekNumber >= peakStartWeek) {
+    return 'peak'
+  }
+
+  if (weekNumber % 4 === 0) {
+    return 'recovery'
+  }
+
+  if (weekNumber <= Math.ceil(totalWeeks * 0.4)) {
+    return 'base'
+  }
+
+  return 'build'
+}
+
+function getWeekLoadProfile(phase: WeekPhase, weeksToRace: number): WeekLoadProfile {
+  if (phase === 'race') {
+    return {
+      longRunFactor: 0.42,
+      volumeFactor: 0.52,
+      qualityFactor: 0.72,
+    }
+  }
+
+  if (phase === 'taper') {
+    if (weeksToRace <= 1) {
+      return {
+        longRunFactor: 0.52,
+        volumeFactor: 0.58,
+        qualityFactor: 0.78,
+      }
+    }
+
+    if (weeksToRace === 2) {
+      return {
+        longRunFactor: 0.68,
+        volumeFactor: 0.74,
+        qualityFactor: 0.88,
+      }
+    }
+
+    return {
+      longRunFactor: 0.82,
+      volumeFactor: 0.88,
+      qualityFactor: 0.94,
+    }
+  }
+
+  if (phase === 'recovery') {
+    return {
+      longRunFactor: 0.8,
+      volumeFactor: 0.84,
+      qualityFactor: 0.88,
+    }
+  }
+
+  if (phase === 'peak') {
+    return {
+      longRunFactor: 1.04,
+      volumeFactor: 1.03,
+      qualityFactor: 1.02,
+    }
+  }
+
+  if (phase === 'base') {
+    return {
+      longRunFactor: 0.94,
+      volumeFactor: 0.95,
+      qualityFactor: 0.9,
+    }
+  }
+
+  return {
+    longRunFactor: 1,
+    volumeFactor: 1,
+    qualityFactor: 1,
+  }
+}
+
+function weeklyFocus(phase: WeekPhase, weeksToRace: number) {
+  if (phase === 'race') {
+    return 'Raceweek: volume sterk omlaag, benen fris houden en vertrouwen meenemen naar de start.'
+  }
+
+  if (phase === 'taper') {
+    if (weeksToRace <= 1) {
+      return 'Laatste taperweek: korte, lichte prikkels en veel herstel zodat je volledig uitgerust start.'
+    }
+    if (weeksToRace === 2) {
+      return 'Taperweek: volume duidelijk terugschalen, kwaliteit kort houden en herstel prioriteren.'
+    }
+    return 'Vroege taper: trainingsbelasting gecontroleerd afbouwen met behoud van ritme.'
+  }
+
+  if (phase === 'recovery') {
     return 'Herstelweek: minder volume zodat je sterker terugkomt.'
   }
-  if (week <= Math.ceil(totalWeeks / 3)) {
-    return 'Basis opbouwen: rustige kilometers en techniek.'
+
+  if (phase === 'peak') {
+    return 'Piekblok: wedstrijdspecifieke trainingen en gecontroleerd hoge belasting.'
   }
-  if (week <= Math.ceil((totalWeeks * 2) / 3)) {
-    return 'Opbouw: meer kwaliteit rond tempo en interval.'
+
+  if (phase === 'base') {
+    return 'Basis opbouwen: rustige kilometers, techniek en consistente trainingsroutine.'
   }
-  return 'Specifiek: wedstrijdgericht tempo en langere blokken.'
+
+  return 'Opbouw: meer kwaliteit rond tempo en interval met geleidelijke volumestijging.'
 }
 
 function sessionDescription(type: TrainingSession['type'], distanceKm: number, raceLabel: string) {
@@ -217,31 +339,55 @@ function chooseSessionTypes(daysPerWeek: number) {
   return ['recovery', 'easy', 'interval', 'easy', 'tempo', 'easy', 'long'] as const
 }
 
+function sessionTypeForPhase(type: TrainingSession['type'], phase: WeekPhase, weeksToRace: number) {
+  if (phase === 'race') {
+    if (type === 'long' || type === 'tempo' || type === 'interval') {
+      return 'easy' as const
+    }
+  }
+
+  if (phase === 'taper' && weeksToRace <= 1 && type === 'interval') {
+    return 'tempo' as const
+  }
+
+  return type
+}
+
 function sessionDistance(
   type: TrainingSession['type'],
   longRunKm: number,
   distanceKm: number,
-  isRecoveryWeek: boolean,
-  isTaperWeek: boolean,
+  profile: WeekLoadProfile,
+  phase: WeekPhase,
 ) {
-  const taperFactor = isTaperWeek ? 0.78 : 1
-  const recoveryFactor = isRecoveryWeek ? 0.9 : 1
-  const base = longRunKm * taperFactor * recoveryFactor
+  const base = longRunKm * profile.volumeFactor
+  const minFactor = phase === 'race' ? 0.6 : phase === 'taper' ? 0.8 : 1
 
   if (type === 'long') {
+    if (phase === 'race') {
+      return roundToHalf(clamp(longRunKm * 0.55, 4, Math.max(8, distanceKm * 0.25)))
+    }
     return roundToHalf(longRunKm)
   }
   if (type === 'recovery') {
-    return roundToHalf(clamp(base * 0.35, 4, Math.max(6, distanceKm * 0.35)))
+    const minKm = 4 * minFactor
+    const maxKm = Math.max(minKm + 1, Math.max(6 * minFactor, distanceKm * 0.35))
+    return roundToHalf(clamp(base * 0.35, minKm, maxKm))
   }
   if (type === 'easy') {
-    return roundToHalf(clamp(base * 0.5, 5, Math.max(10, distanceKm * 0.5)))
+    const minKm = 5 * minFactor
+    const maxKm = Math.max(minKm + 1.5, Math.max(10 * minFactor, distanceKm * 0.5))
+    return roundToHalf(clamp(base * 0.5, minKm, maxKm))
   }
   if (type === 'interval') {
-    return roundToHalf(clamp(base * 0.55, 5, Math.max(12, distanceKm * 0.55)))
+    const minKm = 5 * minFactor
+    const maxKm = Math.max(minKm + 2, Math.max(12 * minFactor, distanceKm * 0.55))
+    return roundToHalf(clamp(base * 0.55 * profile.qualityFactor, minKm, maxKm))
   }
   if (type === 'tempo') {
-    return roundToHalf(clamp(base * 0.6, 5, Math.max(14, distanceKm * 0.65)))
+    const minKm = 5 * minFactor
+    const maxKm = Math.max(minKm + 2.5, Math.max(14 * minFactor, distanceKm * 0.65))
+    return roundToHalf(clamp(base * 0.6 * profile.qualityFactor, minKm, maxKm))
   }
 
   return roundToHalf(distanceKm)
@@ -314,6 +460,9 @@ export function generatePlan(form: PlannerForm): TrainingPlan {
   const startMonday = startOfWeekMonday(startDate)
   const peakLong = getPeakLongRun(distanceKm, form.raceType)
   const initialLong = clamp(roundToHalf(peakLong * 0.55), 5, peakLong - 2)
+  const taperWeeks = getTaperWeeks(form.raceType, distanceKm, totalWeeks)
+  const buildWeeks = Math.max(1, totalWeeks - taperWeeks - 1)
+  const raceLabel = raceName(form.raceType, roundToHalf(distanceKm))
 
   const sessionTypes = chooseSessionTypes(safeDaysPerWeek)
   const dayPattern = DAY_PATTERNS[safeDaysPerWeek]
@@ -324,21 +473,13 @@ export function generatePlan(form: PlannerForm): TrainingPlan {
     const weekNumber = weekIndex + 1
     const weekStart = addDays(startMonday, weekIndex * 7)
     const weekEnd = addDays(weekStart, 6)
-    const progression = totalWeeks <= 1 ? 1 : weekIndex / (totalWeeks - 1)
-
-    const isFinalWeek = weekNumber === totalWeeks
-    const isTaperWeek = weekNumber >= totalWeeks - 1
-    const isRecoveryWeek = weekNumber % 4 === 0 && !isFinalWeek && !isTaperWeek
-
-    let longRunKm = initialLong + (peakLong - initialLong) * progression
-    if (isRecoveryWeek) {
-      longRunKm *= 0.82
-    }
-    if (isTaperWeek) {
-      longRunKm *= weekNumber === totalWeeks ? 0.45 : 0.7
-    }
-
-    longRunKm = roundToHalf(clamp(longRunKm, 4, peakLong))
+    const weeksToRace = totalWeeks - weekNumber
+    const phase = weekPhaseFor(weekNumber, totalWeeks, taperWeeks)
+    const loadProfile = getWeekLoadProfile(phase, weeksToRace)
+    const cappedBuildIndex = Math.min(weekIndex, buildWeeks - 1)
+    const progression = buildWeeks <= 1 ? 1 : cappedBuildIndex / (buildWeeks - 1)
+    const buildLongRun = initialLong + (peakLong - initialLong) * progression
+    const longRunKm = roundToHalf(clamp(buildLongRun * loadProfile.longRunFactor, 4, peakLong))
 
     const sessions: TrainingSession[] = []
 
@@ -351,20 +492,21 @@ export function generatePlan(form: PlannerForm): TrainingPlan {
         return
       }
 
-      const distance = sessionDistance(type, longRunKm, distanceKm, isRecoveryWeek, isTaperWeek)
+      const adaptedType = sessionTypeForPhase(type, phase, weeksToRace)
+      const distance = sessionDistance(adaptedType, longRunKm, distanceKm, loadProfile, phase)
       sessions.push({
-        id: `${weekNumber}-${idx}-${type}`,
+        id: `${weekNumber}-${idx}-${adaptedType}`,
         dateISO: formatISO(trainingDate),
         weekday: WEEKDAY_NL[trainingDate.getDay()],
-        title: sessionTitle(type),
-        type,
+        title: sessionTitle(adaptedType),
+        type: adaptedType,
         distanceKm: distance,
-        pace: sessionPace(type, targetPaceMinPerKm),
-        description: sessionDescription(type, distance, raceName(form.raceType, roundToHalf(distanceKm))),
+        pace: sessionPace(adaptedType, targetPaceMinPerKm),
+        description: sessionDescription(adaptedType, distance, raceLabel),
       })
     })
 
-    if (isFinalWeek) {
+    if (phase === 'race') {
       const raceDistance = roundToHalf(distanceKm)
       const raceDateISO = formatISO(endDate)
       const onRaceDaySessionIndex = sessions.findIndex((session) => session.dateISO === raceDateISO)
@@ -393,14 +535,14 @@ export function generatePlan(form: PlannerForm): TrainingPlan {
       weekNumber,
       startDateISO: formatISO(weekStart),
       endDateISO: formatISO(weekEnd),
-      focus: weeklyFocus(weekNumber, totalWeeks),
+      focus: weeklyFocus(phase, weeksToRace),
       totalDistanceKm,
       sessions,
     })
   }
 
   return {
-    raceLabel: raceName(form.raceType, roundToHalf(distanceKm)),
+    raceLabel,
     distanceKm: roundToHalf(distanceKm),
     goalTimeMinutes,
     targetPaceMinPerKm,
