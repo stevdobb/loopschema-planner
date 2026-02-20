@@ -11,28 +11,28 @@ export default {
         sm: '0.375rem',
       },
       colors: {
-        background: '#f4f8fd',
-        foreground: '#0f2238',
+        background: '#f7f5ee',
+        foreground: '#1f2a2b',
         card: {
-          DEFAULT: '#ffffff',
-          foreground: '#0f2238',
+          DEFAULT: '#fffdf8',
+          foreground: '#1f2a2b',
         },
         primary: {
-          DEFAULT: '#0f4f99',
-          foreground: '#f4f8fd',
+          DEFAULT: '#0f766e',
+          foreground: '#f7fffb',
         },
         secondary: {
-          DEFAULT: '#e5eef9',
-          foreground: '#12385f',
+          DEFAULT: '#e9f2ea',
+          foreground: '#25413f',
         },
         muted: {
-          DEFAULT: '#edf3fb',
-          foreground: '#4d6783',
+          DEFAULT: '#eef1e7',
+          foreground: '#556968',
         },
-        border: '#cfdded',
+        border: '#d7dfd3',
       },
       boxShadow: {
-        soft: '0 12px 34px -18px rgba(15, 79, 153, 0.35)',
+        soft: '0 16px 36px -22px rgba(19, 63, 59, 0.34)',
       },
       fontFamily: {
         sans: ['"Manrope"', '"Segoe UI"', 'sans-serif'],
