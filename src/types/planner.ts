@@ -43,3 +43,11 @@ export interface TrainingPlan {
   daysPerWeek: number
   weeks: TrainingWeek[]
 }
+
+export interface SavedPlanEntry {
+  id: string
+  name: string
+  createdAtISO: string
+  form: PlannerForm
+  plan: TrainingPlan
+}

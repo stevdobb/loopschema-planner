@@ -2,20 +2,21 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
-import { Calendar, Download, Expand, FileImage, FileText, Goal, Printer, RefreshCcw, X } from 'lucide-vue-next'
+import { Calendar, Download, Expand, FileImage, FileText, FolderOpen, Goal, Printer, RefreshCcw, Save, Trash2, X } from 'lucide-vue-next'
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
 import Input from '@/components/ui/Input.vue'
 import Label from '@/components/ui/Label.vue'
 import { formatDateLong, formatGoalTime, formatPaceValue } from '@/lib/planner'
 import { usePlannerStore } from '@/stores/planner'
-import type { RaceType, TrainingSession } from '@/types/planner'
+import type { RaceType, SavedPlanEntry, TrainingSession } from '@/types/planner'
 
 const planner = usePlannerStore()
 const exportElement = ref<HTMLElement | null>(null)
 const localError = ref('')
 const isExporting = ref(false)
 const isPreviewModalOpen = ref(false)
+const savePlanName = ref('')
 
 const raceOptions: { label: string; value: RaceType }[] = [
   { label: 'Marathon (42.2 km)', value: 'marathon' },
@@ -151,6 +152,56 @@ function generatePlan() {
 function resetPlanner() {
   planner.reset()
   localError.value = ''
+}
+
+function defaultPlanName() {
+  const now = new Intl.DateTimeFormat('nl-NL', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date())
+  return planner.plan ? `${planner.plan.raceLabel} ${now}` : `Planning ${now}`
+}
+
+function saveNamedPlan() {
+  localError.value = ''
+
+  try {
+    planner.saveCurrentPlan(savePlanName.value.trim() || defaultPlanName())
+    savePlanName.value = ''
+  } catch (error) {
+    localError.value = error instanceof Error ? error.message : 'Opslaan mislukt.'
+  }
+}
+
+function loadSavedPlanEntry(planId: string) {
+  localError.value = ''
+
+  try {
+    planner.loadSavedPlan(planId)
+    closePreviewModal()
+  } catch (error) {
+    localError.value = error instanceof Error ? error.message : 'Laden mislukt.'
+  }
+}
+
+function deleteSavedPlanEntry(planId: string) {
+  planner.deleteSavedPlan(planId)
+}
+
+function savedPlanPeriod(entry: SavedPlanEntry) {
+  return `${formatDateLong(entry.plan.startDateISO)} t/m ${formatDateLong(entry.plan.endDateISO)}`
+}
+
+function savedAtLabel(createdAtISO: string) {
+  const date = new Date(createdAtISO)
+  if (!Number.isFinite(date.getTime())) {
+    return ''
+  }
+
+  return new Intl.DateTimeFormat('nl-NL', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date)
 }
 
 function typeBadgeClass(type: TrainingSession['type']) {
@@ -395,6 +446,64 @@ onBeforeUnmount(() => {
         </Card>
 
         <section>
+          <Card class="mb-4 p-5 print:hidden">
+            <h2 class="mb-2 text-2xl font-bold">Opgeslagen planningen</h2>
+            <p class="text-sm font-medium text-muted-foreground">
+              Geef je planning een naam en bewaar hem lokaal om later opnieuw te openen.
+            </p>
+
+            <div class="mt-4 grid gap-2 sm:grid-cols-[1fr,auto]">
+              <Input
+                v-model="savePlanName"
+                :disabled="!planner.plan"
+                placeholder="Bijv. Rotterdam voorbereiding"
+                @keydown.enter.prevent="saveNamedPlan"
+              />
+              <Button type="button" :disabled="!planner.plan" @click="saveNamedPlan">
+                <Save class="h-4 w-4" />
+                Planning opslaan
+              </Button>
+            </div>
+
+            <p v-if="!planner.plan" class="mt-2 text-xs font-medium text-muted-foreground">
+              Genereer eerst een planning om op te slaan.
+            </p>
+
+            <div class="mt-4 space-y-2">
+              <p v-if="!planner.savedPlans.length" class="rounded-lg border border-dashed border-border bg-secondary/40 px-3 py-2 text-sm text-muted-foreground">
+                Nog geen opgeslagen planningen.
+              </p>
+
+              <article
+                v-for="saved in planner.savedPlans"
+                :key="saved.id"
+                class="flex flex-col gap-3 rounded-xl border border-border/80 bg-white/80 px-3 py-3 sm:flex-row sm:items-start sm:justify-between"
+              >
+                <div class="min-w-0">
+                  <h3 class="truncate text-sm font-semibold text-foreground">{{ saved.name }}</h3>
+                  <p class="text-xs text-muted-foreground">{{ saved.plan.raceLabel }} · {{ savedPlanPeriod(saved) }}</p>
+                  <p class="text-xs text-muted-foreground/90">{{ savedAtLabel(saved.createdAtISO) }}</p>
+                </div>
+                <div class="flex shrink-0 gap-2">
+                  <Button type="button" size="sm" variant="outline" @click="loadSavedPlanEntry(saved.id)">
+                    <FolderOpen class="h-3.5 w-3.5" />
+                    Open
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    class="text-rose-700 hover:bg-rose-100 hover:text-rose-900"
+                    @click="deleteSavedPlanEntry(saved.id)"
+                  >
+                    <Trash2 class="h-3.5 w-3.5" />
+                    Verwijder
+                  </Button>
+                </div>
+              </article>
+            </div>
+          </Card>
+
           <Card v-if="planner.plan" class="mb-4 p-5 print:hidden">
             <h2 class="mb-3 text-2xl font-bold">Planoverzicht</h2>
             <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
