@@ -32,6 +32,7 @@ const weekdayHeaders = ['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo'] as const
 interface ExportCell {
   title: string
   value: string
+  dateLabel: string
   type: TrainingSession['type'] | 'rest'
 }
 
@@ -89,7 +90,7 @@ function exportTitle(session: TrainingSession) {
   if (session.type === 'interval') return 'Snelle duurloop'
   if (session.type === 'tempo') return planner.plan?.raceLabel.toLowerCase().includes('marathon') ? 'Marathon tempo' : 'Tempo run'
   if (session.type === 'long') return 'Lange duurloop'
-  return 'Wedstrijd'
+  return `Wedstrijd (${session.weekday})`
 }
 
 function exportValue(session: TrainingSession) {
@@ -116,6 +117,7 @@ const exportWeeks = computed<ExportWeekRow[]>(() => {
         cells.push({
           title: 'Rustdag',
           value: '-',
+          dateLabel: formatShortDate(isoDate),
           type: 'rest',
         })
         continue
@@ -124,6 +126,7 @@ const exportWeeks = computed<ExportWeekRow[]>(() => {
       cells.push({
         title: exportTitle(session),
         value: exportValue(session),
+        dateLabel: formatShortDate(session.dateISO),
         type: session.type,
       })
     }
@@ -594,6 +597,7 @@ onBeforeUnmount(() => {
                           class="day-cell"
                         >
                           <div class="cell-title">{{ cell.title }}</div>
+                          <div class="cell-date">{{ cell.dateLabel }}</div>
                           <div :class="['cell-value', exportCellClass(cell.type)]">{{ cell.value }}</div>
                         </td>
                         <td class="week-end-date">{{ week.weekEndShort }}</td>
@@ -720,6 +724,7 @@ onBeforeUnmount(() => {
                           class="day-cell"
                         >
                           <div class="cell-title">{{ cell.title }}</div>
+                          <div class="cell-date">{{ cell.dateLabel }}</div>
                           <div :class="['cell-value', exportCellClass(cell.type)]">{{ cell.value }}</div>
                         </td>
                         <td class="week-end-date">{{ week.weekEndShort }}</td>

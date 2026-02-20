@@ -193,8 +193,19 @@
     padding: 4px;
   }
 
+  .export-table .cell-date {
+    border-bottom: 1px solid #d6e4f2;
+    background: #ecf3fb;
+    color: #244a77;
+    font-size: clamp(0.5rem, 0.75vw, 0.6rem);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    line-height: 1.25;
+    padding: 3px 4px;
+  }
+
   .export-table .cell-value {
-    min-height: 64px;
+    min-height: 48px;
     display: grid;
     place-items: center;
     padding: 6px 4px;
