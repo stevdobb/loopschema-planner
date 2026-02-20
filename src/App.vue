@@ -233,18 +233,18 @@ function savedAtLabel(createdAtISO: string) {
 }
 
 function typeBadgeClass(type: TrainingSession['type']) {
-  if (type === 'easy') return 'bg-emerald-100 text-emerald-900'
-  if (type === 'recovery') return 'bg-teal-100 text-teal-900'
-  if (type === 'tempo') return 'bg-amber-100 text-amber-900'
-  if (type === 'interval') return 'bg-orange-100 text-orange-900'
-  if (type === 'long') return 'bg-lime-100 text-lime-900'
-  return 'bg-primary/15 text-primary'
+  if (type === 'easy') return 'bg-zinc-100 text-zinc-800'
+  if (type === 'recovery') return 'bg-slate-100 text-slate-800'
+  if (type === 'tempo') return 'bg-stone-100 text-stone-800'
+  if (type === 'interval') return 'bg-gray-200 text-gray-800'
+  if (type === 'long') return 'bg-neutral-200 text-neutral-800'
+  return 'bg-zinc-200 text-zinc-800'
 }
 
 function exportCellClass(type: ExportCell['type']) {
-  if (type === 'race') return 'bg-emerald-200/70 text-emerald-950'
-  if (type === 'interval') return 'bg-orange-200/70 text-orange-950'
-  if (type === 'tempo') return 'bg-amber-200/70 text-amber-950'
+  if (type === 'race') return 'bg-zinc-300/80 text-zinc-900'
+  if (type === 'interval') return 'bg-slate-300/70 text-slate-900'
+  if (type === 'tempo') return 'bg-gray-300/70 text-gray-900'
   if (type === 'rest') return 'bg-stone-100 text-stone-700'
   return ''
 }
@@ -383,7 +383,7 @@ onBeforeUnmount(() => {
   <main class="min-h-screen bg-background pb-12">
     <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <header class="hero-shell mb-7 rounded-3xl px-6 py-8 md:px-8 md:py-10">
-        <p class="mb-3 inline-flex items-center gap-2 rounded-full bg-white/65 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-primary backdrop-blur">
+        <p class="mb-3 inline-flex items-center gap-2 rounded-full bg-muted/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-foreground backdrop-blur">
           <Goal class="h-4 w-4" />
           Training Planner
         </p>
@@ -403,7 +403,7 @@ onBeforeUnmount(() => {
               <Label>Doelafstand</Label>
               <select
                 v-model="planner.form.raceType"
-                class="h-10 w-full rounded-xl border border-border bg-white px-3 text-sm font-medium outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                class="h-10 w-full rounded-xl border border-border bg-white px-3 text-sm font-medium outline-none transition focus:border-zinc-500 focus:ring-2 focus:ring-zinc-300"
               >
                 <option v-for="option in raceOptions" :key="option.value" :value="option.value">
                   {{ option.label }}
@@ -474,7 +474,7 @@ onBeforeUnmount(() => {
               <Label>Trainingsdagen per week</Label>
               <select
                 v-model.number="planner.form.daysPerWeek"
-                class="h-10 w-full rounded-xl border border-border bg-white px-3 text-sm font-medium outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                class="h-10 w-full rounded-xl border border-border bg-white px-3 text-sm font-medium outline-none transition focus:border-zinc-500 focus:ring-2 focus:ring-zinc-300"
               >
                 <option v-for="days in dayOptions" :key="days" :value="days">{{ days }} dagen</option>
               </select>
@@ -706,7 +706,7 @@ onBeforeUnmount(() => {
         <section class="modal-panel">
           <header class="modal-panel-header">
             <div>
-              <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary/80">Preview</p>
+              <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Preview</p>
               <h3 class="text-base font-bold text-foreground md:text-lg">
                 {{ planner.plan?.raceLabel }} Trainingsplanning
               </h3>
