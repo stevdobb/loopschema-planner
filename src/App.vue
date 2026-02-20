@@ -563,7 +563,7 @@ onBeforeUnmount(() => {
             </div>
           </Card>
 
-          <Card v-if="planner.plan" id="printable-plan-section" class="mb-4 p-4">
+          <Card v-if="planner.plan" id="printable-plan-section" class="mb-4 hidden p-4 md:block print:block">
             <div class="mb-3 print:hidden">
               <h2 class="text-2xl font-bold">Exportvoorbeeld per dag</h2>
               <p class="text-sm font-medium text-muted-foreground">
