@@ -53,12 +53,19 @@ const summaryRows = computed(() => {
 
   return [
     { label: 'Doelrace', value: planner.plan.raceLabel },
-    { label: 'Periode', value: `${formatDateLong(planner.plan.startDateISO)} t/m ${formatDateLong(planner.plan.endDateISO)}` },
+    { label: 'Periode', value: planDateRange.value },
     { label: 'Doeltijd', value: formatGoalTime(planner.plan.goalTimeMinutes) },
     { label: 'Doeltempo', value: formatPaceValue(planner.plan.targetPaceMinPerKm) },
     { label: 'Trainingsweken', value: String(planner.plan.totalWeeks) },
     { label: 'Dagen per week', value: String(planner.plan.daysPerWeek) },
   ]
+})
+
+const planDateRange = computed(() => {
+  if (!planner.plan) {
+    return ''
+  }
+  return `${formatDateLong(planner.plan.startDateISO)} t/m ${formatDateLong(planner.plan.endDateISO)}`
 })
 
 function addDays(isoDate: string, days: number) {
@@ -393,10 +400,8 @@ function printPlan() {
             <div class="overflow-hidden rounded-xl border border-border/90 bg-white/80">
               <div id="printable-plan" ref="exportElement" class="export-sheet">
                 <header class="export-sheet-header">
-                  <h3>{{ planner.plan.raceLabel }} Trainingsplanning</h3>
-                  <p>
-                    {{ formatDateLong(planner.plan.startDateISO) }} t/m {{ formatDateLong(planner.plan.endDateISO) }}
-                  </p>
+                  <h3>{{ planner.plan.raceLabel }} Trainingsplanning · {{ planDateRange }}</h3>
+                  <p>Automatisch gegenereerd loopschema</p>
                 </header>
 
                 <table class="export-table">
@@ -440,7 +445,7 @@ function printPlan() {
             <div class="mb-5 border-b border-border pb-4">
               <h2 class="text-3xl font-bold">Detailplanning met uitleg</h2>
               <p class="mt-2 text-sm font-medium text-muted-foreground">
-                Van {{ formatDateLong(planner.plan.startDateISO) }} tot {{ formatDateLong(planner.plan.endDateISO) }}
+                Van {{ planDateRange }}
               </p>
             </div>
 
