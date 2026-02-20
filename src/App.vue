@@ -83,6 +83,14 @@ function addDays(isoDate: string, days: number) {
   return date.toISOString().slice(0, 10)
 }
 
+function startOfWeekMondayISO(isoDate: string) {
+  const date = new Date(isoDate)
+  const day = date.getDay()
+  const diff = day === 0 ? -6 : 1 - day
+  date.setDate(date.getDate() + diff)
+  return date.toISOString().slice(0, 10)
+}
+
 function formatShortDate(dateISO: string) {
   const date = new Date(dateISO)
   return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}`
@@ -110,9 +118,21 @@ const exportWeeks = computed<ExportWeekRow[]>(() => {
     const sessionsByDate = new Map(week.sessions.map((session) => [session.dateISO, session]))
     const cells: ExportCell[] = []
     let displayedTotalKm = 0
+    const raceSession = week.sessions.find((session) => session.type === 'race')
+
+    let gridStartISO = week.startDateISO
+    if (raceSession) {
+      const weekStartDate = new Date(week.startDateISO)
+      const weekEndDate = new Date(addDays(week.startDateISO, 6))
+      const raceDate = new Date(raceSession.dateISO)
+      const raceInGridRange = raceDate >= weekStartDate && raceDate <= weekEndDate
+      if (!raceInGridRange) {
+        gridStartISO = startOfWeekMondayISO(raceSession.dateISO)
+      }
+    }
 
     for (let dayOffset = 0; dayOffset < 7; dayOffset += 1) {
-      const isoDate = addDays(week.startDateISO, dayOffset)
+      const isoDate = addDays(gridStartISO, dayOffset)
       const session = sessionsByDate.get(isoDate)
 
       if (!session) {
@@ -136,7 +156,7 @@ const exportWeeks = computed<ExportWeekRow[]>(() => {
 
     return {
       weekNumber: week.weekNumber,
-      weekEndShort: formatShortDate(week.endDateISO),
+      weekEndShort: formatShortDate(addDays(gridStartISO, 6)),
       totalDistanceKm: roundToHalf(displayedTotalKm),
       cells,
     }

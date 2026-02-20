@@ -420,6 +420,8 @@ function raceName(raceType: RaceType, distanceKm: number) {
 export function generatePlan(form: PlannerForm): TrainingPlan {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
+  const startDate = today
+  const startMonday = startOfWeekMonday(startDate)
 
   const goalTimeMinutes = parseGoalTimeToMinutes(form.goalTime)
   if (!goalTimeMinutes || goalTimeMinutes <= 0) {
@@ -438,6 +440,7 @@ export function generatePlan(form: PlannerForm): TrainingPlan {
   const targetPaceMinPerKm = goalTimeMinutes / distanceKm
 
   let endDate: Date
+  let totalWeeks: number
   if (form.mode === 'date') {
     if (!form.raceDate) {
       throw new Error('Kies een wedstrijddatum of schakel over naar trainingsweken.')
@@ -451,13 +454,15 @@ export function generatePlan(form: PlannerForm): TrainingPlan {
     if (endDate <= today) {
       throw new Error('Wedstrijddatum moet na vandaag liggen.')
     }
+
+    const weekMs = 1000 * 60 * 60 * 24 * 7
+    const diffMs = endDate.getTime() - startMonday.getTime()
+    totalWeeks = clamp(Math.floor(diffMs / weekMs) + 1, 2, 52)
   } else {
-    endDate = addDays(today, safeTrainingWeeks * 7)
+    totalWeeks = safeTrainingWeeks
+    endDate = addDays(startMonday, totalWeeks * 7 - 1)
   }
 
-  const startDate = today
-  const totalWeeks = form.mode === 'weeks' ? safeTrainingWeeks : weeksBetween(startDate, endDate)
-  const startMonday = startOfWeekMonday(startDate)
   const peakLong = getPeakLongRun(distanceKm, form.raceType)
   const initialLong = clamp(roundToHalf(peakLong * 0.55), 5, peakLong - 2)
   const taperWeeks = getTaperWeeks(form.raceType, distanceKm, totalWeeks)
