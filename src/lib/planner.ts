@@ -37,6 +37,15 @@ function formatISO(date: Date) {
   return date.toISOString().slice(0, 10)
 }
 
+export function isValidISODate(dateISO: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateISO)) {
+    return false
+  }
+
+  const parsed = new Date(dateISO)
+  return Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0, 10) === dateISO
+}
+
 function startOfWeekMonday(date: Date) {
   const copy = new Date(date)
   const day = copy.getDay()
@@ -287,6 +296,9 @@ export function generatePlan(form: PlannerForm): TrainingPlan {
     if (!form.raceDate) {
       throw new Error('Kies een wedstrijddatum of schakel over naar trainingsweken.')
     }
+    if (!isValidISODate(form.raceDate)) {
+      throw new Error('Wedstrijddatum is ongeldig. Kies een geldige datum.')
+    }
 
     endDate = new Date(form.raceDate)
     endDate.setHours(0, 0, 0, 0)
@@ -408,6 +420,10 @@ export function formatGoalTime(minutes: number) {
 }
 
 export function formatDateLong(dateISO: string) {
+  if (!isValidISODate(dateISO)) {
+    return 'Onbekende datum'
+  }
+
   const date = new Date(dateISO)
   return new Intl.DateTimeFormat('nl-NL', {
     day: '2-digit',

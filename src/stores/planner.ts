@@ -1,7 +1,7 @@
 import { computed } from 'vue'
 import { defineStore } from 'pinia'
 import { useStorage } from '@vueuse/core'
-import { generatePlan } from '@/lib/planner'
+import { generatePlan, isValidISODate } from '@/lib/planner'
 import type { PlannerForm, TrainingPlan } from '@/types/planner'
 
 function defaultRaceDateISO() {
@@ -21,10 +21,37 @@ const DEFAULT_FORM: PlannerForm = {
   daysPerWeek: 4,
 }
 
+function isValidStoredPlan(value: TrainingPlan | null): value is TrainingPlan {
+  if (!value) {
+    return false
+  }
+  if (!isValidISODate(value.startDateISO) || !isValidISODate(value.endDateISO)) {
+    return false
+  }
+  if (!Array.isArray(value.weeks)) {
+    return false
+  }
+
+  return value.weeks.every((week) => {
+    if (!isValidISODate(week.startDateISO) || !isValidISODate(week.endDateISO)) {
+      return false
+    }
+    if (!Array.isArray(week.sessions)) {
+      return false
+    }
+    return week.sessions.every((session) => isValidISODate(session.dateISO))
+  })
+}
+
 export const usePlannerStore = defineStore('planner', () => {
   const form = useStorage<PlannerForm>('mtp-form', DEFAULT_FORM)
   const plan = useStorage<TrainingPlan | null>('mtp-plan', null)
   const lastError = useStorage<string>('mtp-error', '')
+
+  if (plan.value && !isValidStoredPlan(plan.value)) {
+    plan.value = null
+    lastError.value = 'Opgeslagen planning bevatte ongeldige datums en is verwijderd. Genereer een nieuw schema.'
+  }
 
   const hasPlan = computed(() => Boolean(plan.value && plan.value.weeks.length))
 
