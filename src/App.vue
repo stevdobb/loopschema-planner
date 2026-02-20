@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
 import { Calendar, Download, Expand, FileImage, FileText, FolderOpen, Goal, Printer, RefreshCcw, Save, Trash2, X } from 'lucide-vue-next'
@@ -41,6 +41,8 @@ interface ExportWeekRow {
   totalDistanceKm: number
   cells: ExportCell[]
 }
+
+type PrintTarget = 'table' | 'list'
 
 const todayISO = computed(() => {
   const now = new Date()
@@ -293,12 +295,27 @@ async function downloadPdf() {
   }
 }
 
-function printPlan() {
+function setPrintTargetClass(target: PrintTarget) {
+  document.body.classList.remove('print-target-table', 'print-target-list')
+  document.body.classList.add(target === 'table' ? 'print-target-table' : 'print-target-list')
+}
+
+function clearPrintTargetClass() {
+  document.body.classList.remove('print-target-table', 'print-target-list')
+}
+
+async function printPlan(target: PrintTarget) {
   if (!planner.plan) {
     localError.value = 'Genereer eerst een planning om te kunnen printen.'
     return
   }
 
+  if (isPreviewModalOpen.value) {
+    closePreviewModal()
+  }
+
+  setPrintTargetClass(target)
+  await nextTick()
   window.print()
 }
 
@@ -325,11 +342,14 @@ watch(isPreviewModalOpen, (open) => {
 
 onMounted(() => {
   window.addEventListener('keydown', handleWindowKeydown)
+  window.addEventListener('afterprint', clearPrintTargetClass)
 })
 
 onBeforeUnmount(() => {
   document.body.classList.remove('modal-open')
+  clearPrintTargetClass()
   window.removeEventListener('keydown', handleWindowKeydown)
+  window.removeEventListener('afterprint', clearPrintTargetClass)
 })
 </script>
 
@@ -522,9 +542,13 @@ onBeforeUnmount(() => {
                 <FileImage class="h-4 w-4" />
                 Download afbeelding
               </Button>
-              <Button type="button" variant="secondary" @click="printPlan">
+              <Button type="button" variant="secondary" @click="printPlan('table')">
                 <Printer class="h-4 w-4" />
-                Afdrukken
+                Afdruk tabel
+              </Button>
+              <Button type="button" variant="outline" @click="printPlan('list')">
+                <Printer class="h-4 w-4" />
+                Afdruk lijst
               </Button>
               <Button type="button" variant="outline" @click="openPreviewModal">
                 <Expand class="h-4 w-4" />
@@ -533,7 +557,7 @@ onBeforeUnmount(() => {
             </div>
           </Card>
 
-          <Card v-if="planner.plan" class="mb-4 p-4">
+          <Card v-if="planner.plan" id="printable-plan-section" class="mb-4 p-4">
             <div class="mb-3 print:hidden">
               <h2 class="text-2xl font-bold">Exportvoorbeeld per dag</h2>
               <p class="text-sm font-medium text-muted-foreground">
@@ -585,7 +609,7 @@ onBeforeUnmount(() => {
             </div>
           </Card>
 
-          <Card v-if="planner.plan" class="p-5 print:hidden">
+          <Card v-if="planner.plan" id="printable-list-section" class="p-5">
             <div class="mb-5 border-b border-border pb-4">
               <h2 class="text-3xl font-bold">Detailplanning met uitleg</h2>
               <p class="mt-2 text-sm font-medium text-muted-foreground">

@@ -255,12 +255,21 @@
     visibility: hidden;
   }
 
-  #printable-plan,
-  #printable-plan * {
+  body.print-target-table #printable-plan-section,
+  body.print-target-table #printable-plan-section *,
+  body:not(.print-target-list):not(.print-target-table) #printable-plan-section,
+  body:not(.print-target-list):not(.print-target-table) #printable-plan-section * {
     visibility: visible;
   }
 
-  #printable-plan {
+  body.print-target-list #printable-list-section,
+  body.print-target-list #printable-list-section * {
+    visibility: visible;
+  }
+
+  body.print-target-table #printable-plan-section,
+  body:not(.print-target-list):not(.print-target-table) #printable-plan-section,
+  body.print-target-list #printable-list-section {
     position: absolute;
     left: 0;
     top: 0;
@@ -270,6 +279,15 @@
     box-shadow: none;
     padding: 0;
     background: #fff !important;
+  }
+
+  body.print-target-list #printable-list-section .animate-rise {
+    animation: none !important;
+  }
+
+  body.print-target-list #printable-list-section article {
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 
   .export-table .cell-value {
