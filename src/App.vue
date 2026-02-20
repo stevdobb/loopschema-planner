@@ -73,6 +73,10 @@ const planDateRange = computed(() => {
   return `${formatDateLong(planner.plan.startDateISO)} t/m ${formatDateLong(planner.plan.endDateISO)}`
 })
 
+function roundToHalf(value: number) {
+  return Math.round(value * 2) / 2
+}
+
 function addDays(isoDate: string, days: number) {
   const date = new Date(isoDate)
   date.setDate(date.getDate() + days)
@@ -94,9 +98,6 @@ function exportTitle(session: TrainingSession) {
 }
 
 function exportValue(session: TrainingSession) {
-  if (session.type === 'race') {
-    return planner.plan?.raceLabel ?? 'Wedstrijd'
-  }
   return `${session.distanceKm} km`
 }
 
@@ -108,6 +109,7 @@ const exportWeeks = computed<ExportWeekRow[]>(() => {
   return planner.plan.weeks.map((week) => {
     const sessionsByDate = new Map(week.sessions.map((session) => [session.dateISO, session]))
     const cells: ExportCell[] = []
+    let displayedTotalKm = 0
 
     for (let dayOffset = 0; dayOffset < 7; dayOffset += 1) {
       const isoDate = addDays(week.startDateISO, dayOffset)
@@ -129,12 +131,13 @@ const exportWeeks = computed<ExportWeekRow[]>(() => {
         dateLabel: formatShortDate(session.dateISO),
         type: session.type,
       })
+      displayedTotalKm += session.distanceKm
     }
 
     return {
       weekNumber: week.weekNumber,
       weekEndShort: formatShortDate(week.endDateISO),
-      totalDistanceKm: week.totalDistanceKm,
+      totalDistanceKm: roundToHalf(displayedTotalKm),
       cells,
     }
   })
