@@ -364,7 +364,7 @@ onBeforeUnmount(() => {
           <Goal class="h-4 w-4" />
           Training Planner
         </p>
-        <h1 class="font-display text-4xl font-bold text-foreground md:text-5xl">Marathon & Running Planner</h1>
+        <h1 class="text-2xl font-bold text-foreground md:text-3xl">Marathon & Running Planner</h1>
         <p class="mt-4 max-w-3xl text-sm font-semibold leading-relaxed text-muted-foreground md:text-base">
           Vul je doeltijd, wedstrijddatum of aantal trainingsweken in en krijg automatisch een planning voor marathon,
           halve marathon, 10k, 5k of je eigen custom afstand.
@@ -684,7 +684,7 @@ onBeforeUnmount(() => {
           <header class="modal-panel-header">
             <div>
               <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary/80">Preview</p>
-              <h3 class="font-display text-xl font-bold text-foreground">
+              <h3 class="text-base font-bold text-foreground md:text-lg">
                 {{ planner.plan?.raceLabel }} Trainingsplanning
               </h3>
               <p class="text-sm font-medium text-muted-foreground">{{ planDateRange }}</p>
