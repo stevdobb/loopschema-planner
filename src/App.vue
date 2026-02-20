@@ -381,7 +381,7 @@ onBeforeUnmount(() => {
 
 <template>
   <main class="min-h-screen bg-background pb-12">
-    <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-[1800px] px-4 py-8 sm:px-6 lg:px-8">
       <header class="hero-shell mb-7 rounded-3xl px-6 py-8 md:px-8 md:py-10">
         <p class="mb-3 inline-flex items-center gap-2 rounded-full bg-muted/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-foreground backdrop-blur">
           <Goal class="h-4 w-4" />
