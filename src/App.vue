@@ -485,7 +485,7 @@ onBeforeUnmount(() => {
               <Button type="button" variant="secondary" @click="resetPlanner">Reset</Button>
             </div>
 
-            <p v-if="localError || planner.lastError" class="rounded-lg bg-rose-100 px-3 py-2 text-sm text-rose-900">
+            <p v-if="localError || planner.lastError" class="rounded-lg bg-zinc-200 px-3 py-2 text-sm text-zinc-900">
               {{ localError || planner.lastError }}
             </p>
           </div>
@@ -539,7 +539,7 @@ onBeforeUnmount(() => {
                     type="button"
                     size="sm"
                     variant="ghost"
-                    class="text-rose-700 hover:bg-rose-100 hover:text-rose-900"
+                    class="text-zinc-700 hover:bg-zinc-200 hover:text-zinc-900"
                     @click="deleteSavedPlanEntry(saved.id)"
                   >
                     <Trash2 class="h-3.5 w-3.5" />
