@@ -25,7 +25,7 @@ const raceOptions: { label: string; value: RaceType }[] = [
 ]
 
 const dayOptions = [2, 3, 4, 5, 6, 7]
-const weekdayHeaders = ['Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag', 'Zondag'] as const
+const weekdayHeaders = ['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo'] as const
 
 interface ExportCell {
   title: string
@@ -245,22 +245,22 @@ function printPlan() {
 </script>
 
 <template>
-  <main class="min-h-screen bg-background pb-16">
+  <main class="min-h-screen bg-background pb-12">
     <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <header class="mb-7 rounded-3xl border border-border bg-card px-6 py-9 shadow-soft">
-        <p class="mb-3 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-primary">
+      <header class="hero-shell mb-7 rounded-3xl px-6 py-8 md:px-8 md:py-10">
+        <p class="mb-3 inline-flex items-center gap-2 rounded-full bg-white/65 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-primary backdrop-blur">
           <Goal class="h-4 w-4" />
           Training Planner
         </p>
-        <h1 class="text-4xl font-bold text-foreground md:text-5xl">Marathon & Running Planner</h1>
-        <p class="mt-4 max-w-3xl text-sm font-medium leading-relaxed text-muted-foreground md:text-base">
+        <h1 class="font-display text-4xl font-bold text-foreground md:text-5xl">Marathon & Running Planner</h1>
+        <p class="mt-4 max-w-3xl text-sm font-semibold leading-relaxed text-muted-foreground md:text-base">
           Vul je doeltijd, wedstrijddatum of aantal trainingsweken in en krijg automatisch een planning voor marathon,
           halve marathon, 10k, 5k of je eigen custom afstand.
         </p>
       </header>
 
-      <div class="grid gap-6 lg:grid-cols-[400px,1fr] print:block">
-        <Card class="h-fit p-5 print:hidden">
+      <div class="grid items-start gap-6 lg:grid-cols-[380px,minmax(0,1fr)] print:block">
+        <Card class="h-fit p-5 print:hidden lg:sticky lg:top-6">
           <h2 class="mb-4 text-xl font-semibold">Instellingen</h2>
 
           <div class="space-y-4">
@@ -360,7 +360,7 @@ function printPlan() {
           <Card v-if="planner.plan" class="mb-4 p-5 print:hidden">
             <h2 class="mb-3 text-2xl font-bold">Planoverzicht</h2>
             <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-              <div v-for="row in summaryRows" :key="row.label" class="rounded-lg bg-secondary px-3 py-2">
+              <div v-for="row in summaryRows" :key="row.label" class="rounded-xl border border-border/70 bg-secondary/60 px-3 py-2">
                 <p class="text-xs uppercase tracking-[0.11em] text-muted-foreground">{{ row.label }}</p>
                 <p class="text-sm font-semibold text-foreground">{{ row.value }}</p>
               </div>
@@ -390,8 +390,8 @@ function printPlan() {
               </p>
             </div>
 
-            <div class="overflow-x-auto rounded-lg border border-border">
-              <div id="printable-plan" ref="exportElement" class="export-sheet min-w-[1220px]">
+            <div class="overflow-hidden rounded-xl border border-border/90 bg-white/80">
+              <div id="printable-plan" ref="exportElement" class="export-sheet">
                 <header class="export-sheet-header">
                   <h3>{{ planner.plan.raceLabel }} Trainingsplanning</h3>
                   <p>

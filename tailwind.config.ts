@@ -36,7 +36,7 @@ export default {
       },
       fontFamily: {
         sans: ['"Manrope"', '"Segoe UI"', 'sans-serif'],
-        display: ['"Syne"', '"Manrope"', '"Segoe UI"', 'sans-serif'],
+        display: ['"Sora"', '"Manrope"', '"Segoe UI"', 'sans-serif'],
       },
       keyframes: {
         rise: {
