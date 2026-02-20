@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
-import { Calendar, Download, FileImage, FileText, Goal, Printer, RefreshCcw } from 'lucide-vue-next'
+import { Calendar, Download, Expand, FileImage, FileText, Goal, Printer, RefreshCcw, X } from 'lucide-vue-next'
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
 import Input from '@/components/ui/Input.vue'
@@ -15,6 +15,7 @@ const planner = usePlannerStore()
 const exportElement = ref<HTMLElement | null>(null)
 const localError = ref('')
 const isExporting = ref(false)
+const isPreviewModalOpen = ref(false)
 
 const raceOptions: { label: string; value: RaceType }[] = [
   { label: 'Marathon (42.2 km)', value: 'marathon' },
@@ -249,6 +250,36 @@ function printPlan() {
 
   window.print()
 }
+
+function openPreviewModal() {
+  if (!planner.plan) {
+    return
+  }
+  isPreviewModalOpen.value = true
+}
+
+function closePreviewModal() {
+  isPreviewModalOpen.value = false
+}
+
+function handleWindowKeydown(event: KeyboardEvent) {
+  if (event.key === 'Escape') {
+    closePreviewModal()
+  }
+}
+
+watch(isPreviewModalOpen, (open) => {
+  document.body.classList.toggle('modal-open', open)
+})
+
+onMounted(() => {
+  window.addEventListener('keydown', handleWindowKeydown)
+})
+
+onBeforeUnmount(() => {
+  document.body.classList.remove('modal-open')
+  window.removeEventListener('keydown', handleWindowKeydown)
+})
 </script>
 
 <template>
@@ -386,6 +417,10 @@ function printPlan() {
                 <Printer class="h-4 w-4" />
                 Afdrukken
               </Button>
+              <Button type="button" variant="outline" @click="openPreviewModal">
+                <Expand class="h-4 w-4" />
+                Toon in modal
+              </Button>
             </div>
           </Card>
 
@@ -504,5 +539,70 @@ function printPlan() {
         </section>
       </div>
     </div>
+
+    <Teleport to="body">
+      <div v-if="isPreviewModalOpen" class="modal-overlay">
+        <button class="modal-backdrop" aria-label="Sluit schema modal" @click="closePreviewModal" />
+        <section class="modal-panel">
+          <header class="modal-panel-header">
+            <div>
+              <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary/80">Preview</p>
+              <h3 class="font-display text-xl font-bold text-foreground">
+                {{ planner.plan?.raceLabel }} Trainingsplanning
+              </h3>
+              <p class="text-sm font-medium text-muted-foreground">{{ planDateRange }}</p>
+            </div>
+            <Button type="button" variant="ghost" class="h-9 w-9 rounded-full p-0" @click="closePreviewModal">
+              <X class="h-4 w-4" />
+            </Button>
+          </header>
+
+          <div class="modal-panel-body">
+            <div class="overflow-hidden rounded-xl border border-border/90 bg-white/80">
+              <div class="export-sheet">
+                <header class="export-sheet-header">
+                  <h3>{{ planner.plan?.raceLabel }} Trainingsplanning · {{ planDateRange }}</h3>
+                  <p>Automatisch gegenereerd loopschema</p>
+                </header>
+
+                <table class="export-table">
+                  <thead>
+                    <tr>
+                      <th class="week-col">Week</th>
+                      <th v-for="day in weekdayHeaders" :key="`modal-${day}`">{{ day }}</th>
+                      <th class="date-col">Datum</th>
+                      <th class="km-col">Totaal</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <template v-for="week in exportWeeks" :key="`modal-${week.weekNumber}`">
+                      <tr class="separator-row">
+                        <td colspan="10" />
+                      </tr>
+                      <tr class="week-row">
+                        <td class="week-number">{{ week.weekNumber }}.</td>
+                        <td
+                          v-for="(cell, cellIndex) in week.cells"
+                          :key="`modal-${week.weekNumber}-${cellIndex}`"
+                          class="day-cell"
+                        >
+                          <div class="cell-title">{{ cell.title }}</div>
+                          <div :class="['cell-value', exportCellClass(cell.type)]">{{ cell.value }}</div>
+                        </td>
+                        <td class="week-end-date">{{ week.weekEndShort }}</td>
+                        <td class="week-km">{{ week.totalDistanceKm }} km</td>
+                      </tr>
+                    </template>
+                    <tr class="separator-row">
+                      <td colspan="10" />
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </Teleport>
   </main>
 </template>
