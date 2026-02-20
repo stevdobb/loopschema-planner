@@ -6,11 +6,11 @@
 
 @layer base {
   :root {
-    --sheet-bg: #f5f6f8;
-    --sheet-head: #374151;
-    --sheet-head-muted: #4b5563;
-    --sheet-line: #d1d5db;
-    --sheet-ink: #1f2937;
+    --sheet-bg: #f5f5f5;
+    --sheet-head: #3f3f46;
+    --sheet-head-muted: #52525b;
+    --sheet-line: #d4d4d8;
+    --sheet-ink: #27272a;
   }
 
   * {
@@ -19,9 +19,9 @@
 
   body {
     @apply bg-background font-sans text-foreground antialiased;
-    background-image: radial-gradient(circle at 0% 0%, rgba(148, 163, 184, 0.18), transparent 35%),
-      radial-gradient(circle at 100% 0%, rgba(100, 116, 139, 0.12), transparent 34%),
-      linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
+    background-image: radial-gradient(circle at 0% 0%, rgba(113, 113, 122, 0.12), transparent 35%),
+      radial-gradient(circle at 100% 0%, rgba(161, 161, 170, 0.1), transparent 34%),
+      linear-gradient(180deg, #f8f8f8 0%, #eeeeef 100%);
     letter-spacing: 0.005em;
   }
 
@@ -38,15 +38,15 @@
   }
 
   ::selection {
-    background: rgba(148, 163, 184, 0.22);
+    background: rgba(161, 161, 170, 0.24);
   }
 }
 
 @layer components {
   .hero-shell {
-    border: 1px solid rgba(209, 213, 219, 0.96);
-    background: linear-gradient(140deg, rgba(255, 255, 255, 0.94) 0%, rgba(241, 245, 249, 0.95) 100%);
-    box-shadow: 0 18px 42px -28px rgba(17, 24, 39, 0.32);
+    border: 1px solid rgba(212, 212, 216, 0.96);
+    background: linear-gradient(140deg, rgba(255, 255, 255, 0.94) 0%, rgba(244, 244, 245, 0.95) 100%);
+    box-shadow: 0 18px 42px -28px rgba(39, 39, 42, 0.28);
     backdrop-filter: blur(4px);
   }
 
@@ -63,7 +63,7 @@
     position: absolute;
     inset: 0;
     border: 0;
-    background: rgba(15, 23, 42, 0.55);
+    background: rgba(24, 24, 27, 0.55);
     backdrop-filter: blur(3px);
   }
 
@@ -72,9 +72,9 @@
     width: min(1220px, 96vw);
     max-height: 92vh;
     border-radius: 1.3rem;
-    border: 1px solid rgba(209, 213, 219, 0.95);
-    background: linear-gradient(160deg, rgba(255, 255, 255, 0.98), rgba(241, 245, 249, 0.98));
-    box-shadow: 0 28px 68px -34px rgba(15, 23, 42, 0.46);
+    border: 1px solid rgba(212, 212, 216, 0.95);
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.98), rgba(244, 244, 245, 0.98));
+    box-shadow: 0 28px 68px -34px rgba(24, 24, 27, 0.36);
     overflow: hidden;
   }
 
@@ -84,8 +84,8 @@
     justify-content: space-between;
     gap: 0.75rem;
     padding: 0.9rem 1rem;
-    border-bottom: 1px solid #d1d5db;
-    background: rgba(248, 250, 252, 0.92);
+    border-bottom: 1px solid #d4d4d8;
+    background: rgba(249, 249, 250, 0.92);
   }
 
   .modal-panel-body {
@@ -103,7 +103,7 @@
   .export-sheet-header {
     padding: 12px 14px;
     border-bottom: 1px solid var(--sheet-line);
-    background: linear-gradient(140deg, #f9fafb 0%, #eef2f7 100%);
+    background: linear-gradient(140deg, #fafafa 0%, #efefef 100%);
   }
 
   .export-sheet-header h3 {
@@ -118,7 +118,7 @@
   .export-sheet-header p {
     margin: 2px 0 0;
     font-size: clamp(0.71rem, 1.15vw, 0.82rem);
-    color: #4b5563;
+    color: #52525b;
     font-weight: 600;
   }
 
@@ -159,12 +159,12 @@
     padding: 0;
     border: 0;
     height: 8px;
-    background: #4b5563;
+    background: #52525b;
   }
 
   .export-table .week-row td {
     border-right: 1px solid var(--sheet-line);
-    background: #f5f7fb;
+    background: #f6f6f7;
     text-align: center;
     vertical-align: middle;
     padding: 0;
@@ -185,7 +185,7 @@
   }
 
   .export-table .cell-title {
-    background: #4b5563;
+    background: #52525b;
     color: #fff;
     font-size: clamp(0.5rem, 0.78vw, 0.62rem);
     font-weight: 800;
@@ -196,9 +196,9 @@
   }
 
   .export-table .cell-date {
-    border-bottom: 1px solid #d5dbe3;
-    background: #edf1f6;
-    color: #4b5563;
+    border-bottom: 1px solid #d8d8dc;
+    background: #efeff2;
+    color: #52525b;
     font-size: clamp(0.5rem, 0.75vw, 0.6rem);
     font-weight: 700;
     letter-spacing: 0.02em;
