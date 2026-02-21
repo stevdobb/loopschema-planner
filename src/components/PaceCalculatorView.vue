@@ -471,8 +471,8 @@ function handleCustomDistanceInput(event: Event) {
       </div>
 
       <Card class="pace-panel p-0">
-        <div class="max-h-[900px] overflow-auto">
-          <table class="pace-table min-w-[760px]">
+        <div class="pace-table-wrap">
+          <table class="pace-table">
             <thead>
               <tr>
                 <th>{{ labels.split }}</th>
@@ -589,6 +589,12 @@ function handleCustomDistanceInput(event: Event) {
 .pace-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.pace-table-wrap {
+  max-height: none;
+  overflow: visible;
 }
 
 .pace-table th,
@@ -597,6 +603,8 @@ function handleCustomDistanceInput(event: Event) {
   padding: 0.58rem 0.68rem;
   border-bottom: 1px solid rgba(148, 163, 184, 0.25);
   font-size: 0.9rem;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .pace-table th {
@@ -743,6 +751,74 @@ function handleCustomDistanceInput(event: Event) {
 @media (max-width: 880px) {
   .time-value {
     font-size: clamp(1.8rem, 12vw, 3rem);
+  }
+}
+
+@media (max-width: 768px) {
+  .metric-pill {
+    padding: 0.52rem 0.62rem;
+  }
+
+  .metric-label {
+    font-size: 0.64rem;
+  }
+
+  .metric-value {
+    font-size: 0.95rem;
+  }
+
+  .quick-time-btn {
+    padding: 0.16rem 0.5rem;
+    font-size: 0.68rem;
+  }
+
+  .time-adjust {
+    width: 1.85rem;
+    height: 1.5rem;
+  }
+
+  .time-value {
+    font-size: clamp(1.7rem, 11vw, 2.5rem);
+  }
+
+  .half-card {
+    padding: 0.72rem;
+  }
+
+  .pace-table {
+    table-layout: auto;
+  }
+
+  .pace-table th,
+  .pace-table td {
+    padding: 0.5rem 0.56rem;
+    font-size: 0.82rem;
+  }
+}
+
+@media (max-width: 520px) {
+  .time-col {
+    gap: 0.3rem;
+  }
+
+  .time-value {
+    font-size: clamp(1.45rem, 10vw, 2rem);
+    letter-spacing: -0.02em;
+  }
+
+  .pace-table-wrap {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .pace-table {
+    table-layout: auto;
+  }
+
+  .pace-table th,
+  .pace-table td {
+    padding: 0.42rem 0.48rem;
+    font-size: 0.76rem;
   }
 }
 </style>

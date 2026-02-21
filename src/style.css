@@ -317,31 +317,31 @@
   }
 
   .theme-weather .app-shell .export-sheet {
-    --sheet-bg: #0a356b;
-    --sheet-head: #082d5c;
-    --sheet-head-muted: #1f5ea5;
-    --sheet-line: rgba(151, 201, 255, 0.34);
+    --sheet-bg: #1a5ea8;
+    --sheet-head: #124a8d;
+    --sheet-head-muted: #2f74bf;
+    --sheet-line: rgba(181, 220, 255, 0.4);
     --sheet-ink: #eef6ff;
   }
 
   .theme-weather .app-shell .export-table .week-row td {
-    background: rgba(9, 52, 106, 0.9) !important;
-    border-right: 1px solid rgba(151, 201, 255, 0.32) !important;
+    background: rgba(33, 109, 190, 0.78) !important;
+    border-right: 1px solid rgba(181, 220, 255, 0.34) !important;
   }
 
   .theme-weather .app-shell .export-table .separator-row td {
-    background: rgba(9, 44, 92, 0.95) !important;
+    background: rgba(23, 86, 156, 0.9) !important;
   }
 
   .theme-weather .app-shell .export-table .cell-title {
-    background: #082d5c !important;
+    background: #0f4587 !important;
     color: #f8fbff !important;
   }
 
   .theme-weather .app-shell .export-table .cell-date {
-    background: rgba(8, 41, 87, 0.94) !important;
+    background: rgba(16, 72, 137, 0.88) !important;
     color: #cfe6ff !important;
-    border-bottom: 1px solid rgba(154, 202, 255, 0.34) !important;
+    border-bottom: 1px solid rgba(181, 220, 255, 0.38) !important;
   }
 
   .theme-weather .app-shell .export-table .cell-value {
@@ -424,6 +424,18 @@
 
   .theme-weather .app-shell .pace-table tbody tr:nth-child(even) {
     background: rgba(36, 108, 189, 0.9) !important;
+  }
+
+  .theme-weather .app-shell .saved-plan-delete-btn {
+    color: #dbeafe !important;
+    border: 1px solid rgba(151, 201, 255, 0.26) !important;
+    background: rgba(10, 57, 114, 0.32) !important;
+  }
+
+  .theme-weather .app-shell .saved-plan-delete-btn:hover {
+    color: #ffe4e6 !important;
+    border-color: rgba(251, 113, 133, 0.5) !important;
+    background: rgba(190, 24, 93, 0.26) !important;
   }
 
   .theme-light body {

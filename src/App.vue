@@ -1863,7 +1863,7 @@ onBeforeUnmount(() => {
                     type="button"
                     size="sm"
                     variant="ghost"
-                    class="text-zinc-700 hover:bg-rose-100 hover:text-rose-700"
+                    class="saved-plan-delete-btn text-zinc-700 hover:bg-rose-100 hover:text-rose-700"
                     @click="deleteSavedPlanEntry(saved.id)"
                   >
                     <Trash2 class="h-3.5 w-3.5" />
