@@ -411,14 +411,12 @@ interface ExportWeekRow {
 }
 
 type PrintTarget = 'table' | 'list'
-type PrintTableMode = 'compact' | 'readable'
 const editableSessionTypes: TrainingSession['type'][] = ['easy', 'recovery', 'tempo', 'interval', 'long', 'race']
 const selectedWeekNumber = ref<number | null>(null)
 const selectedDayIndex = ref(0)
 const editType = ref<TrainingSession['type']>('easy')
 const editDistanceKm = ref<number>(8)
 const editDescription = ref('')
-const printTableMode = ref<PrintTableMode>('readable')
 
 const todayISO = computed(() => {
   const now = new Date()
@@ -1233,11 +1231,8 @@ async function downloadPdf() {
 }
 
 function setPrintTargetClass(target: PrintTarget) {
-  document.body.classList.remove('print-target-table', 'print-target-list', 'print-table-compact', 'print-table-readable')
+  document.body.classList.remove('print-target-table', 'print-target-list')
   document.body.classList.add(target === 'table' ? 'print-target-table' : 'print-target-list')
-  if (target === 'table') {
-    document.body.classList.add(printTableMode.value === 'readable' ? 'print-table-readable' : 'print-table-compact')
-  }
 }
 
 function setTablePrintScale() {
@@ -1264,13 +1259,12 @@ function setTablePrintScale() {
   const scaleByHeight = availableHeight / contentHeight
   const scale = Math.min(1, scaleByWidth, scaleByHeight)
   const baseScale = Math.max(0.18, Number.isFinite(scale) ? scale : 1)
-  const modeAdjustedScale = printTableMode.value === 'readable' ? Math.min(1, baseScale * 1.2) : baseScale
-
-  document.documentElement.style.setProperty('--print-table-scale', String(modeAdjustedScale))
+  const readableScale = Math.min(1, baseScale * 1.2)
+  document.documentElement.style.setProperty('--print-table-scale', String(readableScale))
 }
 
 function clearPrintTargetClass() {
-  document.body.classList.remove('print-target-table', 'print-target-list', 'print-table-compact', 'print-table-readable')
+  document.body.classList.remove('print-target-table', 'print-target-list')
   document.documentElement.style.removeProperty('--print-table-scale')
 }
 
@@ -1641,24 +1635,6 @@ onBeforeUnmount(() => {
             </div>
 
             <div class="mt-4 flex flex-wrap gap-2">
-              <div class="inline-flex rounded-xl border border-border bg-white p-1">
-                <button
-                  type="button"
-                  class="rounded-lg px-2.5 py-1 text-xs font-semibold transition"
-                  :class="printTableMode === 'compact' ? 'bg-zinc-900 text-white' : 'text-zinc-700 hover:bg-zinc-100'"
-                  @click="printTableMode = 'compact'"
-                >
-                  {{ t('printModeCompact') }}
-                </button>
-                <button
-                  type="button"
-                  class="rounded-lg px-2.5 py-1 text-xs font-semibold transition"
-                  :class="printTableMode === 'readable' ? 'bg-zinc-900 text-white' : 'text-zinc-700 hover:bg-zinc-100'"
-                  @click="printTableMode = 'readable'"
-                >
-                  {{ t('printModeReadable') }}
-                </button>
-              </div>
               <Button type="button" variant="outline" :disabled="isExporting" @click="downloadPdf">
                 <FileText class="h-4 w-4" />
                 {{ t('downloadPdf') }}
