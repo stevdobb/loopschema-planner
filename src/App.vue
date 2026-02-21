@@ -869,6 +869,15 @@ function deleteSessionForSelectedDay() {
   hasManualEdits.value = true
 }
 
+function selectExportCell(weekNumber: number, dayIndex: number) {
+  selectedWeekNumber.value = weekNumber
+  selectedDayIndex.value = Math.max(0, Math.min(6, dayIndex))
+}
+
+function isSelectedExportCell(weekNumber: number, dayIndex: number) {
+  return selectedWeekNumber.value === weekNumber && selectedDayIndex.value === dayIndex
+}
+
 function setMode(mode: 'date' | 'weeks') {
   planner.form.mode = mode
 }
@@ -1597,7 +1606,11 @@ onBeforeUnmount(() => {
                         <td
                           v-for="(cell, cellIndex) in week.cells"
                           :key="`${week.weekNumber}-${cellIndex}`"
-                          class="day-cell"
+                          :class="[
+                            'day-cell cursor-pointer transition',
+                            isSelectedExportCell(week.weekNumber, cellIndex) ? 'ring-2 ring-blue-500 ring-inset bg-blue-50/35' : 'hover:bg-blue-50/25',
+                          ]"
+                          @click="selectExportCell(week.weekNumber, cellIndex)"
                         >
                           <div class="cell-title">{{ cell.title }}</div>
                           <div class="cell-date">{{ cell.dateLabel }}</div>
