@@ -345,33 +345,4 @@
     page-break-inside: avoid;
   }
 
-  body.print-target-table.print-table-compact .export-table .cell-value {
-    font-size: 7px;
-    min-height: 22px;
-    padding: 3px 2px;
-  }
-
-  body.print-target-table.print-table-compact .export-table .week-end-date,
-  body.print-target-table.print-table-compact .export-table .week-km {
-    font-size: 8px;
-  }
-
-  body.print-target-table.print-table-compact .export-table .week-number {
-    font-size: 9px;
-  }
-
-  body.print-target-table.print-table-compact #printable-plan-section .export-table thead th {
-    font-size: 8px;
-    padding: 5px 3px;
-  }
-
-  body.print-target-table.print-table-compact #printable-plan-section .export-table .cell-title {
-    font-size: 7px;
-    padding: 2px 1px;
-  }
-
-  body.print-target-table.print-table-compact #printable-plan-section .export-table .cell-date {
-    font-size: 7px;
-    padding: 1px;
-  }
 }
