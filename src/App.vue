@@ -77,6 +77,8 @@ const messages = {
     downloadIcs: 'Download ICS',
     printTable: 'Afdruk tabel',
     printList: 'Afdruk lijst',
+    printModeCompact: 'Compact (1 pagina)',
+    printModeReadable: 'Leesbaar (groter)',
     showModal: 'Toon in modal',
     exportPreviewDay: 'Exportvoorbeeld per dag',
     exportPreviewHint: 'Dit weekrooster wordt gebruikt voor afbeelding, PDF en print.',
@@ -177,6 +179,8 @@ const messages = {
     downloadIcs: 'Download ICS',
     printTable: 'Print table',
     printList: 'Print list',
+    printModeCompact: 'Compact (1 page)',
+    printModeReadable: 'Readable (larger)',
     showModal: 'Show in modal',
     exportPreviewDay: 'Daily export preview',
     exportPreviewHint: 'This weekly grid is used for image, PDF and print output.',
@@ -277,6 +281,8 @@ const messages = {
     downloadIcs: 'Telecharger ICS',
     printTable: 'Imprimer tableau',
     printList: 'Imprimer liste',
+    printModeCompact: 'Compact (1 page)',
+    printModeReadable: 'Lisible (plus grand)',
     showModal: 'Afficher en modal',
     exportPreviewDay: 'Apercu export par jour',
     exportPreviewHint: 'Cette grille hebdo est utilisee pour image, PDF et impression.',
@@ -405,12 +411,14 @@ interface ExportWeekRow {
 }
 
 type PrintTarget = 'table' | 'list'
+type PrintTableMode = 'compact' | 'readable'
 const editableSessionTypes: TrainingSession['type'][] = ['easy', 'recovery', 'tempo', 'interval', 'long', 'race']
 const selectedWeekNumber = ref<number | null>(null)
 const selectedDayIndex = ref(0)
 const editType = ref<TrainingSession['type']>('easy')
 const editDistanceKm = ref<number>(8)
 const editDescription = ref('')
+const printTableMode = ref<PrintTableMode>('compact')
 
 const todayISO = computed(() => {
   const now = new Date()
@@ -1225,12 +1233,45 @@ async function downloadPdf() {
 }
 
 function setPrintTargetClass(target: PrintTarget) {
-  document.body.classList.remove('print-target-table', 'print-target-list')
+  document.body.classList.remove('print-target-table', 'print-target-list', 'print-table-compact', 'print-table-readable')
   document.body.classList.add(target === 'table' ? 'print-target-table' : 'print-target-list')
+  if (target === 'table') {
+    document.body.classList.add(printTableMode.value === 'readable' ? 'print-table-readable' : 'print-table-compact')
+  }
+}
+
+function setTablePrintScale() {
+  document.documentElement.style.removeProperty('--print-table-scale')
+  if (!exportElement.value) {
+    return
+  }
+
+  const pxPerMm = 96 / 25.4
+  const pageWidthPx = 297 * pxPerMm
+  const pageHeightPx = 210 * pxPerMm
+  const marginMm = 4
+  const availableWidth = pageWidthPx - marginMm * 2 * pxPerMm
+  const availableHeight = pageHeightPx - marginMm * 2 * pxPerMm
+
+  const contentWidth = exportElement.value.scrollWidth
+  const contentHeight = exportElement.value.scrollHeight
+
+  if (!contentWidth || !contentHeight) {
+    return
+  }
+
+  const scaleByWidth = availableWidth / contentWidth
+  const scaleByHeight = availableHeight / contentHeight
+  const scale = Math.min(1, scaleByWidth, scaleByHeight)
+  const baseScale = Math.max(0.18, Number.isFinite(scale) ? scale : 1)
+  const modeAdjustedScale = printTableMode.value === 'readable' ? Math.min(1, baseScale * 1.2) : baseScale
+
+  document.documentElement.style.setProperty('--print-table-scale', String(modeAdjustedScale))
 }
 
 function clearPrintTargetClass() {
-  document.body.classList.remove('print-target-table', 'print-target-list')
+  document.body.classList.remove('print-target-table', 'print-target-list', 'print-table-compact', 'print-table-readable')
+  document.documentElement.style.removeProperty('--print-table-scale')
 }
 
 async function printPlan(target: PrintTarget) {
@@ -1245,6 +1286,9 @@ async function printPlan(target: PrintTarget) {
 
   setPrintTargetClass(target)
   await nextTick()
+  if (target === 'table') {
+    setTablePrintScale()
+  }
   window.print()
 }
 
@@ -1506,9 +1550,14 @@ onBeforeUnmount(() => {
         </Card>
 
         <section>
-          <Card class="mb-4 p-5 print:hidden">
-            <h2 class="mb-2 text-2xl font-bold">{{ t('savedPlans') }}</h2>
-            <p class="text-sm font-medium text-muted-foreground">
+          <Card class="mb-4 overflow-hidden border-zinc-300/90 bg-gradient-to-br from-zinc-50 to-white p-5 shadow-[0_12px_36px_-26px_rgba(24,24,27,0.65)] print:hidden">
+            <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <h2 class="text-2xl font-bold">{{ t('savedPlans') }}</h2>
+              <span class="rounded-full bg-zinc-900 px-3 py-1 text-xs font-bold text-white">
+                {{ planner.savedPlans.length }}
+              </span>
+            </div>
+            <p class="text-sm font-semibold text-zinc-600">
               {{ t('savedPlansHint') }}
             </p>
 
@@ -1548,22 +1597,22 @@ onBeforeUnmount(() => {
             </p>
 
             <div class="mt-4 space-y-2">
-              <p v-if="!planner.savedPlans.length" class="rounded-lg border border-dashed border-border bg-secondary/40 px-3 py-2 text-sm text-muted-foreground">
+              <p v-if="!planner.savedPlans.length" class="rounded-lg border border-dashed border-zinc-400/70 bg-zinc-100 px-3 py-2 text-sm font-medium text-zinc-600">
                 {{ t('noSavedPlans') }}
               </p>
 
               <article
                 v-for="saved in planner.savedPlans"
                 :key="saved.id"
-                class="flex flex-col gap-3 rounded-xl border border-border/80 bg-white/80 px-3 py-3 sm:flex-row sm:items-start sm:justify-between"
+                class="flex flex-col gap-3 rounded-xl border border-zinc-300/80 bg-white px-3 py-3 shadow-[0_12px_26px_-24px_rgba(24,24,27,0.8)] transition hover:-translate-y-[1px] hover:border-zinc-400 sm:flex-row sm:items-start sm:justify-between"
               >
                 <div class="min-w-0">
-                  <h3 class="truncate text-sm font-semibold text-foreground">{{ saved.name }}</h3>
-                  <p class="text-xs text-muted-foreground">{{ saved.plan.raceLabel }} · {{ savedPlanPeriod(saved) }}</p>
-                  <p class="text-xs text-muted-foreground/90">{{ savedAtLabel(saved.createdAtISO) }}</p>
+                  <h3 class="truncate text-sm font-bold text-zinc-900">{{ saved.name }}</h3>
+                  <p class="text-xs font-semibold text-zinc-700">{{ saved.plan.raceLabel }} · {{ savedPlanPeriod(saved) }}</p>
+                  <p class="text-xs text-zinc-500">{{ savedAtLabel(saved.createdAtISO) }}</p>
                 </div>
                 <div class="flex shrink-0 gap-2">
-                  <Button type="button" size="sm" variant="outline" @click="loadSavedPlanEntry(saved.id)">
+                  <Button type="button" size="sm" class="bg-zinc-900 text-white hover:brightness-110" @click="loadSavedPlanEntry(saved.id)">
                     <FolderOpen class="h-3.5 w-3.5" />
                     {{ t('open') }}
                   </Button>
@@ -1571,7 +1620,7 @@ onBeforeUnmount(() => {
                     type="button"
                     size="sm"
                     variant="ghost"
-                    class="text-zinc-700 hover:bg-zinc-200 hover:text-zinc-900"
+                    class="text-zinc-700 hover:bg-rose-100 hover:text-rose-700"
                     @click="deleteSavedPlanEntry(saved.id)"
                   >
                     <Trash2 class="h-3.5 w-3.5" />
@@ -1592,6 +1641,24 @@ onBeforeUnmount(() => {
             </div>
 
             <div class="mt-4 flex flex-wrap gap-2">
+              <div class="inline-flex rounded-xl border border-border bg-white p-1">
+                <button
+                  type="button"
+                  class="rounded-lg px-2.5 py-1 text-xs font-semibold transition"
+                  :class="printTableMode === 'compact' ? 'bg-zinc-900 text-white' : 'text-zinc-700 hover:bg-zinc-100'"
+                  @click="printTableMode = 'compact'"
+                >
+                  {{ t('printModeCompact') }}
+                </button>
+                <button
+                  type="button"
+                  class="rounded-lg px-2.5 py-1 text-xs font-semibold transition"
+                  :class="printTableMode === 'readable' ? 'bg-zinc-900 text-white' : 'text-zinc-700 hover:bg-zinc-100'"
+                  @click="printTableMode = 'readable'"
+                >
+                  {{ t('printModeReadable') }}
+                </button>
+              </div>
               <Button type="button" variant="outline" :disabled="isExporting" @click="downloadPdf">
                 <FileText class="h-4 w-4" />
                 {{ t('downloadPdf') }}
@@ -1682,7 +1749,7 @@ onBeforeUnmount(() => {
               </div>
             </div>
 
-            <div ref="dayEditorElement" class="mt-4 rounded-xl border border-border/80 bg-white/80 p-4">
+            <div ref="dayEditorElement" class="print-no-table mt-4 rounded-xl border border-border/80 bg-white/80 p-4 print:hidden">
               <h3 class="text-sm font-bold uppercase tracking-[0.08em] text-foreground">{{ t('editorTitle') }}</h3>
               <p class="mt-1 text-xs text-muted-foreground">{{ t('editorHint') }}</p>
 
