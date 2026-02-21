@@ -323,42 +323,11 @@
     width: calc(100% / var(--print-table-scale, 1));
   }
 
-  body.print-target-table #printable-plan-section .export-sheet {
-    border: 1px solid #d4d4d8;
-    border-radius: 0;
-    background: #fff !important;
-  }
-
-  body.print-target-table #printable-plan-section .export-sheet-header {
-    padding: 8px 10px;
-    border-bottom: 1px solid #d4d4d8;
-    background: #f3f4f6 !important;
-  }
-
-  body.print-target-table #printable-plan-section .export-sheet-header h3 {
-    font-size: 11px;
-    letter-spacing: 0;
-  }
-
-  body.print-target-table #printable-plan-section .export-sheet-header p {
-    font-size: 9px;
-  }
-
-  body.print-target-table #printable-plan-section .export-table thead th {
-    padding: 6px 4px;
-    font-size: 9px;
-    background: #3f3f46 !important;
-    color: #fff !important;
-  }
-
-  body.print-target-table #printable-plan-section .export-table .cell-title {
-    font-size: 8px;
-    padding: 3px 2px;
-  }
-
-  body.print-target-table #printable-plan-section .export-table .cell-date {
-    font-size: 8px;
-    padding: 2px;
+  body.print-target-table #printable-plan-section,
+  body.print-target-table #printable-plan-section * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    forced-color-adjust: none !important;
   }
 
   body.print-target-table .print-no-table,
@@ -374,25 +343,6 @@
   body.print-target-list #printable-list-section article {
     break-inside: avoid;
     page-break-inside: avoid;
-  }
-
-  .export-table .cell-value {
-    font-size: 9px;
-    min-height: 30px;
-    padding: 4px 2px;
-  }
-
-  .export-table .week-end-date,
-  .export-table .week-km {
-    font-size: 10px;
-  }
-
-  .export-table .week-number {
-    font-size: 11px;
-  }
-
-  .export-table .separator-row td {
-    height: 4px;
   }
 
   body.print-target-table.print-table-compact .export-table .cell-value {
