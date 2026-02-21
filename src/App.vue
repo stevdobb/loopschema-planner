@@ -86,6 +86,8 @@ const messages = {
     editorDay: 'Dag',
     editorType: 'Type run',
     editorDistance: 'Afstand (km)',
+    editorDescription: 'Beschrijving',
+    editorDescriptionPlaceholder: 'Voeg extra uitleg toe voor deze run...',
     editorNoRun: 'Geen run op deze dag.',
     editorExistingRun: 'Bestaande run:',
     editorCreate: 'Run toevoegen',
@@ -184,6 +186,8 @@ const messages = {
     editorDay: 'Day',
     editorType: 'Run type',
     editorDistance: 'Distance (km)',
+    editorDescription: 'Description',
+    editorDescriptionPlaceholder: 'Add extra notes for this run...',
     editorNoRun: 'No run on this day.',
     editorExistingRun: 'Current run:',
     editorCreate: 'Add run',
@@ -282,6 +286,8 @@ const messages = {
     editorDay: 'Jour',
     editorType: 'Type de sortie',
     editorDistance: 'Distance (km)',
+    editorDescription: 'Description',
+    editorDescriptionPlaceholder: 'Ajoute des notes pour cette sortie...',
     editorNoRun: 'Aucune sortie ce jour.',
     editorExistingRun: 'Sortie actuelle :',
     editorCreate: 'Ajouter',
@@ -404,6 +410,7 @@ const selectedWeekNumber = ref<number | null>(null)
 const selectedDayIndex = ref(0)
 const editType = ref<TrainingSession['type']>('easy')
 const editDistanceKm = ref<number>(8)
+const editDescription = ref('')
 
 const todayISO = computed(() => {
   const now = new Date()
@@ -834,7 +841,7 @@ function applySessionEdit() {
     type: editType.value,
     distanceKm,
     pace: paceForType(editType.value, planner.plan.targetPaceMinPerKm),
-    description: descriptionForType(editType.value, distanceKm),
+    description: editDescription.value.trim() || descriptionForType(editType.value, distanceKm),
   }
 
   if (existingIndex >= 0) {
@@ -1317,11 +1324,13 @@ watch(selectedSession, (session) => {
   if (session) {
     editType.value = session.type
     editDistanceKm.value = session.distanceKm
+    editDescription.value = session.description
     return
   }
 
   editType.value = 'easy'
   editDistanceKm.value = 8
+  editDescription.value = ''
 }, { immediate: true })
 
 watch(currentLocale, (locale, previousLocale) => {
@@ -1645,7 +1654,7 @@ onBeforeUnmount(() => {
                           v-for="(cell, cellIndex) in week.cells"
                           :key="`${week.weekNumber}-${cellIndex}`"
                           :class="[
-                            'day-cell cursor-pointer transition',
+                            'day-cell group relative cursor-pointer transition',
                             isSelectedExportCell(week.weekNumber, cellIndex) ? 'ring-2 ring-blue-500 ring-inset bg-blue-50/35' : 'hover:bg-blue-50/25',
                           ]"
                           @click="selectExportCell(week.weekNumber, cellIndex)"
@@ -1653,6 +1662,13 @@ onBeforeUnmount(() => {
                           <div class="cell-title">{{ cell.title }}</div>
                           <div class="cell-date">{{ cell.dateLabel }}</div>
                           <div :class="['cell-value', exportCellClass(cell.type)]">{{ cell.value }}</div>
+                          <div
+                            class="pointer-events-none invisible absolute left-1/2 top-full z-30 mt-1 w-64 -translate-x-1/2 rounded-lg border border-zinc-300 bg-white/95 p-2 text-left opacity-0 shadow-lg transition group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100"
+                          >
+                            <p class="text-[11px] font-bold text-zinc-900">{{ cell.title }} · {{ cell.value }}</p>
+                            <p class="mt-1 text-[10px] font-semibold text-zinc-700">{{ t('pace') }}: {{ exportCellPopoverPace(week.weekNumber, cell) }}</p>
+                            <p class="mt-1 text-[10px] leading-snug text-zinc-700">{{ exportCellPopoverDescription(week.weekNumber, cell) }}</p>
+                          </div>
                         </td>
                         <td class="week-end-date">{{ week.weekEndShort }}</td>
                         <td class="week-km">{{ week.totalDistanceKm }} km</td>
@@ -1722,6 +1738,16 @@ onBeforeUnmount(() => {
                     @update:model-value="editDistanceKm = Number($event)"
                   />
                 </div>
+              </div>
+
+              <div class="mt-3">
+                <Label>{{ t('editorDescription') }}</Label>
+                <textarea
+                  v-model="editDescription"
+                  rows="3"
+                  class="w-full rounded-xl border border-border bg-white px-3 py-2 text-sm outline-none transition focus:border-zinc-500 focus:ring-2 focus:ring-zinc-300"
+                  :placeholder="t('editorDescriptionPlaceholder')"
+                />
               </div>
 
               <p class="mt-3 text-xs text-muted-foreground">
@@ -1852,11 +1878,18 @@ onBeforeUnmount(() => {
                         <td
                           v-for="(cell, cellIndex) in week.cells"
                           :key="`modal-${week.weekNumber}-${cellIndex}`"
-                          class="day-cell"
+                          class="day-cell group relative"
                         >
                           <div class="cell-title">{{ cell.title }}</div>
                           <div class="cell-date">{{ cell.dateLabel }}</div>
                           <div :class="['cell-value', exportCellClass(cell.type)]">{{ cell.value }}</div>
+                          <div
+                            class="pointer-events-none invisible absolute left-1/2 top-full z-30 mt-1 w-64 -translate-x-1/2 rounded-lg border border-zinc-300 bg-white/95 p-2 text-left opacity-0 shadow-lg transition group-hover:visible group-hover:opacity-100"
+                          >
+                            <p class="text-[11px] font-bold text-zinc-900">{{ cell.title }} · {{ cell.value }}</p>
+                            <p class="mt-1 text-[10px] font-semibold text-zinc-700">{{ t('pace') }}: {{ exportCellPopoverPace(week.weekNumber, cell) }}</p>
+                            <p class="mt-1 text-[10px] leading-snug text-zinc-700">{{ exportCellPopoverDescription(week.weekNumber, cell) }}</p>
+                          </div>
                         </td>
                         <td class="week-end-date">{{ week.weekEndShort }}</td>
                         <td class="week-km">{{ week.totalDistanceKm }} km</td>
