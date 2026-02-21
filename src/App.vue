@@ -5,6 +5,7 @@ import jsPDF from 'jspdf'
 import { Calendar, Download, Expand, FileImage, FileText, FolderOpen, Goal, Printer, RefreshCcw, Save, Trash2, X } from 'lucide-vue-next'
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
+import DatePicker from '@/components/ui/DatePicker.vue'
 import Input from '@/components/ui/Input.vue'
 import Label from '@/components/ui/Label.vue'
 import { getLocaleFromUrl, syncLocaleInUrl } from '@/lib/i18n'
@@ -1500,7 +1501,7 @@ onBeforeUnmount(() => {
 
             <div v-if="planner.form.mode === 'date'">
               <Label>{{ t('raceDate') }}</Label>
-              <Input v-model="planner.form.raceDate" type="date" :min="todayISO" />
+              <DatePicker v-model="planner.form.raceDate" :min="todayISO" :lang="localeTag" />
             </div>
 
             <div v-else>
