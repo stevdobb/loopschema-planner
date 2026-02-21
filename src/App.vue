@@ -885,6 +885,37 @@ function isSelectedExportCell(weekNumber: number, dayIndex: number) {
   return selectedWeekNumber.value === weekNumber && selectedDayIndex.value === dayIndex
 }
 
+function exportCellSession(weekNumber: number, cell: ExportCell) {
+  if (!planner.plan || cell.type === 'rest') {
+    return null
+  }
+
+  const week = planner.plan.weeks.find((item) => item.weekNumber === weekNumber)
+  if (!week) {
+    return null
+  }
+
+  return week.sessions.find((session) => session.dateISO === cell.dateISO) ?? null
+}
+
+function exportCellPopoverDescription(weekNumber: number, cell: ExportCell) {
+  const session = exportCellSession(weekNumber, cell)
+  if (!session) {
+    return t('restDay')
+  }
+
+  return session.description
+}
+
+function exportCellPopoverPace(weekNumber: number, cell: ExportCell) {
+  const session = exportCellSession(weekNumber, cell)
+  if (!session) {
+    return '-'
+  }
+
+  return session.pace
+}
+
 function setMode(mode: 'date' | 'weeks') {
   planner.form.mode = mode
 }
