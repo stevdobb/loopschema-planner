@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Redirecting…</title>
+    <script>
+      (function () {
+        var pathname = window.location.pathname
+        var parts = pathname.split('/').filter(Boolean)
+        var base = parts.length ? '/' + parts[0] : ''
+        var tail = pathname.slice(base.length) || '/'
+        var target =
+          base +
+          '/?gh_tail=' +
+          encodeURIComponent(tail) +
+          '&gh_search=' +
+          encodeURIComponent(window.location.search || '') +
+          '&gh_hash=' +
+          encodeURIComponent(window.location.hash || '')
+
+        window.location.replace(target)
+      })()
+    </script>
+  </head>
+  <body></body>
+  </html>

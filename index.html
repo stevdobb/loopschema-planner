@@ -9,6 +9,22 @@
     <meta name="theme-color" content="#1d4ed8" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <script>
+      (function () {
+        var params = new URLSearchParams(window.location.search)
+        var ghTail = params.get('gh_tail')
+        if (!ghTail) return
+
+        var ghSearch = params.get('gh_search') || ''
+        var ghHash = params.get('gh_hash') || ''
+        var baseParts = window.location.pathname.split('/').filter(Boolean)
+        var base = baseParts.length ? '/' + baseParts[0] : ''
+        var normalizedTail = ghTail.startsWith('/') ? ghTail : '/' + ghTail
+        var nextUrl = (base + normalizedTail + ghSearch + ghHash).replace(/\/{2,}/g, '/')
+
+        window.history.replaceState({}, '', nextUrl)
+      })()
+    </script>
     <title>Marathon Training Planner</title>
   </head>
   <body>
