@@ -2,16 +2,16 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
-import { Calendar, Download, Expand, FileImage, FileText, FolderOpen, Goal, Printer, RefreshCcw, Save, Trash2, X } from 'lucide-vue-next'
+import { Calendar, Download, Expand, FileImage, FileText, FolderOpen, Goal, Moon, Printer, RefreshCcw, Save, Sun, Trash2, X } from 'lucide-vue-next'
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
 import DatePicker from '@/components/ui/DatePicker.vue'
 import Input from '@/components/ui/Input.vue'
 import Label from '@/components/ui/Label.vue'
-import { getLocaleFromUrl, syncLocaleInUrl } from '@/lib/i18n'
+import { getLocaleFromUrl, isAppLocale, syncLocaleInUrl } from '@/lib/i18n'
 import { formatDateLong, formatGoalTime, formatPaceValue, isValidISODate } from '@/lib/planner'
 import { usePlannerStore } from '@/stores/planner'
-import type { AppLocale, PlannerForm, RaceType, SavedPlanEntry, TrainingPlan, TrainingSession } from '@/types/planner'
+import type { AppLocale, PlannerForm, RaceType, SavedPlanEntry, SessionStatus, TrainingPlan, TrainingSession } from '@/types/planner'
 
 const planner = usePlannerStore()
 const exportElement = ref<HTMLElement | null>(null)
@@ -26,6 +26,7 @@ const dayEditorElement = ref<HTMLElement | null>(null)
 const canInstallPwa = ref(false)
 const isAppInstalled = ref(false)
 const deferredInstallPrompt = ref<BeforeInstallPromptEvent | null>(null)
+const appTheme = ref<'light' | 'weather'>('weather')
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>
@@ -40,6 +41,9 @@ const messages = {
     appSubtitle: 'Vul je doeltijd, wedstrijddatum of aantal trainingsweken in en krijg automatisch een planning.',
     settings: 'Instellingen',
     language: 'Taal',
+    theme: 'Thema',
+    themeLight: 'Licht',
+    themeDark: 'Donker',
     installApp: 'Installeer app',
     targetDistance: 'Doelafstand',
     customDistance: 'Eigen afstand (km)',
@@ -73,6 +77,17 @@ const messages = {
     summaryGoalPace: 'Doeltempo',
     summaryWeeks: 'Trainingsweken',
     summaryDays: 'Dagen per week',
+    progressTitle: 'Voortgang',
+    progressPrediction: 'Voorspelde eindtijd',
+    progressTrend: 'Trend',
+    progressCompleted: 'Afgeronde sessies',
+    trendImproving: 'Verbeterend',
+    trendStable: 'Stabiel',
+    trendDeclining: 'Dalend',
+    statusPlanned: 'Gepland',
+    statusDone: 'Gedaan',
+    statusSkipped: 'Overgeslagen',
+    statusMoved: 'Verplaatst',
     downloadPdf: 'Download PDF',
     downloadImage: 'Download afbeelding',
     downloadIcs: 'Download ICS',
@@ -140,6 +155,9 @@ const messages = {
     appSubtitle: 'Enter your goal time, race date or number of training weeks and get an automatic plan.',
     settings: 'Settings',
     language: 'Language',
+    theme: 'Theme',
+    themeLight: 'Light',
+    themeDark: 'Dark',
     installApp: 'Install app',
     targetDistance: 'Target distance',
     customDistance: 'Custom distance (km)',
@@ -173,6 +191,17 @@ const messages = {
     summaryGoalPace: 'Goal pace',
     summaryWeeks: 'Training weeks',
     summaryDays: 'Days per week',
+    progressTitle: 'Progress',
+    progressPrediction: 'Predicted finish time',
+    progressTrend: 'Trend',
+    progressCompleted: 'Completed sessions',
+    trendImproving: 'Improving',
+    trendStable: 'Stable',
+    trendDeclining: 'Declining',
+    statusPlanned: 'Planned',
+    statusDone: 'Done',
+    statusSkipped: 'Skipped',
+    statusMoved: 'Moved',
     downloadPdf: 'Download PDF',
     downloadImage: 'Download image',
     downloadIcs: 'Download ICS',
@@ -240,6 +269,9 @@ const messages = {
     appSubtitle: 'Entre ton objectif, la date de course ou le nombre de semaines et recois un plan automatique.',
     settings: 'Parametres',
     language: 'Langue',
+    theme: 'Theme',
+    themeLight: 'Clair',
+    themeDark: 'Sombre',
     installApp: 'Installer app',
     targetDistance: 'Distance cible',
     customDistance: 'Distance perso (km)',
@@ -273,6 +305,17 @@ const messages = {
     summaryGoalPace: 'Allure cible',
     summaryWeeks: 'Semaines',
     summaryDays: 'Jours par semaine',
+    progressTitle: 'Progression',
+    progressPrediction: "Temps final predit",
+    progressTrend: 'Tendance',
+    progressCompleted: 'Seances terminees',
+    trendImproving: 'En progression',
+    trendStable: 'Stable',
+    trendDeclining: 'En baisse',
+    statusPlanned: 'Planifie',
+    statusDone: 'Fait',
+    statusSkipped: 'Saute',
+    statusMoved: 'Deplace',
     downloadPdf: 'Telecharger PDF',
     downloadImage: 'Telecharger image',
     downloadIcs: 'Telecharger ICS',
@@ -351,6 +394,17 @@ const languageOptions: { value: AppLocale; label: string }[] = [
 
 function t(key: MessageKey) {
   return messages[currentLocale.value][key]
+}
+
+function applyTheme(theme: 'light' | 'weather') {
+  document.documentElement.classList.remove('theme-light', 'theme-weather')
+  document.documentElement.classList.add(theme === 'light' ? 'theme-light' : 'theme-weather')
+}
+
+const isDarkTheme = computed(() => appTheme.value === 'weather')
+
+function toggleTheme() {
+  appTheme.value = appTheme.value === 'weather' ? 'light' : 'weather'
 }
 
 const raceOptions = computed<{ label: string; value: RaceType }[]>(() => {
@@ -433,6 +487,83 @@ const summaryRows = computed(() => {
     { label: t('summaryDays'), value: String(planner.plan.daysPerWeek) },
   ]
 })
+
+function getSessionStatus(session: TrainingSession): SessionStatus {
+  return session.status ?? 'planned'
+}
+
+function setSessionStatus(session: TrainingSession, status: SessionStatus) {
+  session.status = status
+  hasManualEdits.value = true
+}
+
+function statusLabel(status: SessionStatus) {
+  if (status === 'done') return t('statusDone')
+  if (status === 'skipped') return t('statusSkipped')
+  if (status === 'moved') return t('statusMoved')
+  return t('statusPlanned')
+}
+
+function statusBadgeClass(status: SessionStatus) {
+  if (status === 'done') return 'bg-emerald-100 text-emerald-900'
+  if (status === 'skipped') return 'bg-rose-100 text-rose-800'
+  if (status === 'moved') return 'bg-amber-100 text-amber-900'
+  return 'bg-zinc-100 text-zinc-700'
+}
+
+function parsePaceMinPerKm(value: string) {
+  const match = value.match(/(\d+):(\d{2})/)
+  if (!match) return null
+  const minutes = Number(match[1])
+  const seconds = Number(match[2])
+  if (!Number.isFinite(minutes) || !Number.isFinite(seconds)) return null
+  return minutes + seconds / 60
+}
+
+const allSessions = computed(() => planner.plan?.weeks.flatMap((week) => week.sessions) ?? [])
+const completedSessions = computed(() => allSessions.value.filter((session) => getSessionStatus(session) === 'done'))
+
+const predictedGoalTime = computed(() => {
+  if (!planner.plan) return null
+  const paces = completedSessions.value
+    .map((session) => parsePaceMinPerKm(session.pace))
+    .filter((pace): pace is number => typeof pace === 'number' && Number.isFinite(pace))
+
+  if (!paces.length) return planner.plan.goalTimeMinutes
+  const avgCompletedPace = paces.reduce((sum, pace) => sum + pace, 0) / paces.length
+  const ratio = avgCompletedPace / planner.plan.targetPaceMinPerKm
+  const predicted = planner.plan.goalTimeMinutes * ratio
+  return Math.max(5, Math.min(24 * 60, predicted))
+})
+
+const progressTrend = computed(() => {
+  const paces = completedSessions.value
+    .map((session) => parsePaceMinPerKm(session.pace))
+    .filter((pace): pace is number => typeof pace === 'number' && Number.isFinite(pace))
+
+  if (paces.length < 4) {
+    return t('trendStable')
+  }
+
+  const half = Math.floor(paces.length / 2)
+  const first = paces.slice(0, half)
+  const last = paces.slice(half)
+  const firstAvg = first.reduce((sum, pace) => sum + pace, 0) / Math.max(1, first.length)
+  const lastAvg = last.reduce((sum, pace) => sum + pace, 0) / Math.max(1, last.length)
+  const delta = lastAvg - firstAvg
+
+  if (delta < -0.07) return t('trendImproving')
+  if (delta > 0.07) return t('trendDeclining')
+  return t('trendStable')
+})
+
+function weekCompletionPct(weekNumber: number) {
+  if (!planner.plan) return 0
+  const week = planner.plan.weeks.find((item) => item.weekNumber === weekNumber)
+  if (!week || !week.sessions.length) return 0
+  const doneCount = week.sessions.filter((session) => getSessionStatus(session) === 'done').length
+  return Math.round((doneCount / week.sessions.length) * 100)
+}
 
 const displayError = computed(() => {
   if (localError.value) {
@@ -840,6 +971,7 @@ function applySessionEdit() {
     weekday: weekdayName(dateISO),
     title: titleForType(editType.value),
     type: editType.value,
+    status: 'planned',
     distanceKm,
     pace: paceForType(editType.value, planner.plan.targetPaceMinPerKm),
     description: editDescription.value.trim() || descriptionForType(editType.value, distanceKm),
@@ -979,9 +1111,8 @@ function loadSavedPlanEntry(planId: string) {
 
   try {
     planner.loadSavedPlan(planId, currentLocale.value)
-    planner.generate(currentLocale.value)
     closePreviewModal()
-    hasManualEdits.value = false
+    hasManualEdits.value = true
   } catch (error) {
     localError.value = error instanceof Error ? error.message : t('loadFailed')
   }
@@ -1369,6 +1500,7 @@ watch(selectedSession, (session) => {
 watch(currentLocale, (locale, previousLocale) => {
   document.documentElement.lang = locale
   syncLocaleInUrl(locale, !previousLocale)
+  window.localStorage.setItem('loopschema-locale', locale)
 
   if (planner.plan && !hasManualEdits.value) {
     try {
@@ -1380,7 +1512,26 @@ watch(currentLocale, (locale, previousLocale) => {
   }
 })
 
+watch(appTheme, (theme) => {
+  applyTheme(theme)
+  window.localStorage.setItem('loopschema-theme', theme)
+})
+
 onMounted(() => {
+  const pathParts = window.location.pathname.split('/').filter(Boolean)
+  const possibleLocale = pathParts[pathParts.length - 1]
+  const hasLocaleInUrl = isAppLocale(possibleLocale)
+  const storedLocale = window.localStorage.getItem('loopschema-locale')
+
+  if (!hasLocaleInUrl && isAppLocale(storedLocale)) {
+    currentLocale.value = storedLocale
+  }
+
+  const storedTheme = window.localStorage.getItem('loopschema-theme')
+  if (storedTheme === 'light' || storedTheme === 'weather') {
+    appTheme.value = storedTheme
+  }
+  applyTheme(appTheme.value)
   document.documentElement.lang = currentLocale.value
   syncLocaleInUrl(currentLocale.value, true)
   isAppInstalled.value =
@@ -1406,7 +1557,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <main class="min-h-screen bg-background pb-12">
+  <main class="app-shell min-h-screen bg-background pb-12">
     <div class="mx-auto max-w-[1800px] px-4 py-8 sm:px-6 lg:px-8">
       <header class="hero-shell mb-7 rounded-3xl px-6 py-8 md:px-8 md:py-10">
         <div class="flex flex-wrap items-center justify-between gap-3">
@@ -1432,6 +1583,17 @@ onBeforeUnmount(() => {
             >
               <option v-for="option in languageOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
             </select>
+            <Button
+              type="button"
+              variant="outline"
+              class="h-9 w-9 rounded-full p-0"
+              :aria-label="isDarkTheme ? t('themeLight') : t('themeDark')"
+              :title="isDarkTheme ? t('themeLight') : t('themeDark')"
+              @click="toggleTheme"
+            >
+              <Sun v-if="isDarkTheme" class="h-4 w-4" />
+              <Moon v-else class="h-4 w-4" />
+            </Button>
           </div>
         </div>
         <h1 class="mt-3 text-2xl font-bold text-foreground md:text-3xl">{{ t('appTitle') }}</h1>
@@ -1539,7 +1701,7 @@ onBeforeUnmount(() => {
         </Card>
 
         <section>
-          <Card class="mb-4 overflow-hidden border-zinc-300/90 bg-gradient-to-br from-zinc-50 to-white p-5 shadow-[0_12px_36px_-26px_rgba(24,24,27,0.65)] print:hidden">
+          <Card class="mb-4 overflow-hidden border-border/90 bg-gradient-to-br from-[#1b5cae]/80 to-[#134f9f]/75 p-5 shadow-[0_16px_38px_-24px_rgba(3,21,51,0.72)] print:hidden">
             <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
               <h2 class="text-2xl font-bold">{{ t('savedPlans') }}</h2>
               <span class="rounded-full bg-zinc-900 px-3 py-1 text-xs font-bold text-white">
@@ -1626,6 +1788,21 @@ onBeforeUnmount(() => {
               <div v-for="row in summaryRows" :key="row.label" class="rounded-xl border border-border/70 bg-secondary/60 px-3 py-2">
                 <p class="text-xs uppercase tracking-[0.11em] text-muted-foreground">{{ row.label }}</p>
                 <p class="text-sm font-semibold text-foreground">{{ row.value }}</p>
+              </div>
+            </div>
+
+            <div class="mt-3 grid gap-3 sm:grid-cols-3">
+              <div class="rounded-xl border border-border/70 bg-card px-3 py-2">
+                <p class="text-xs uppercase tracking-[0.11em] text-muted-foreground">{{ t('progressPrediction') }}</p>
+                <p class="text-sm font-semibold text-foreground">{{ predictedGoalTime ? formatGoalTime(predictedGoalTime) : '-' }}</p>
+              </div>
+              <div class="rounded-xl border border-border/70 bg-card px-3 py-2">
+                <p class="text-xs uppercase tracking-[0.11em] text-muted-foreground">{{ t('progressTrend') }}</p>
+                <p class="text-sm font-semibold text-foreground">{{ progressTrend }}</p>
+              </div>
+              <div class="rounded-xl border border-border/70 bg-card px-3 py-2">
+                <p class="text-xs uppercase tracking-[0.11em] text-muted-foreground">{{ t('progressCompleted') }}</p>
+                <p class="text-sm font-semibold text-foreground">{{ completedSessions.length }}/{{ allSessions.length }}</p>
               </div>
             </div>
 
@@ -1830,7 +2007,10 @@ onBeforeUnmount(() => {
                       {{ formatDateLong(week.startDateISO, currentLocale) }} - {{ formatDateLong(week.endDateISO, currentLocale) }}
                     </p>
                   </div>
-                  <span class="rounded-full bg-secondary px-3 py-1 text-xs font-semibold">{{ week.totalDistanceKm }} km</span>
+                  <div class="flex items-center gap-2">
+                    <span class="rounded-full bg-secondary px-3 py-1 text-xs font-semibold">{{ week.totalDistanceKm }} km</span>
+                    <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-900">{{ weekCompletionPct(week.weekNumber) }}%</span>
+                  </div>
                 </div>
 
                 <p class="mb-3 rounded-lg bg-muted px-3 py-2 text-sm text-muted-foreground">{{ week.focus }}</p>
@@ -1845,14 +2025,53 @@ onBeforeUnmount(() => {
                       <p class="font-semibold text-foreground">
                         {{ session.weekday }} {{ formatDateLong(session.dateISO, currentLocale) }} - {{ session.title }}
                       </p>
-                      <span :class="['rounded-full px-2.5 py-1 text-xs font-semibold capitalize', typeBadgeClass(session.type)]">
-                        {{ sessionTypeLabel(session.type) }}
-                      </span>
+                      <div class="flex flex-wrap items-center gap-1.5">
+                        <span :class="['rounded-full px-2.5 py-1 text-xs font-semibold capitalize', typeBadgeClass(session.type)]">
+                          {{ sessionTypeLabel(session.type) }}
+                        </span>
+                        <span :class="['rounded-full px-2.5 py-1 text-xs font-semibold', statusBadgeClass(getSessionStatus(session))]">
+                          {{ statusLabel(getSessionStatus(session)) }}
+                        </span>
+                      </div>
                     </div>
                     <p class="mb-1 text-sm text-foreground">
                       <strong>{{ t('distance') }}:</strong> {{ session.distanceKm }} km · <strong>{{ t('pace') }}:</strong> {{ session.pace }}
                     </p>
                     <p class="text-sm text-muted-foreground">{{ session.description }}</p>
+                    <div class="mt-2 flex flex-wrap gap-1.5">
+                      <button
+                        type="button"
+                        class="rounded-md border border-border px-2 py-1 text-[11px] font-semibold transition"
+                        :class="getSessionStatus(session) === 'planned' ? 'bg-zinc-900 text-white border-zinc-900' : 'bg-white text-zinc-700 hover:bg-zinc-100'"
+                        @click="setSessionStatus(session, 'planned')"
+                      >
+                        {{ t('statusPlanned') }}
+                      </button>
+                      <button
+                        type="button"
+                        class="rounded-md border border-border px-2 py-1 text-[11px] font-semibold transition"
+                        :class="getSessionStatus(session) === 'done' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-zinc-700 hover:bg-zinc-100'"
+                        @click="setSessionStatus(session, 'done')"
+                      >
+                        {{ t('statusDone') }}
+                      </button>
+                      <button
+                        type="button"
+                        class="rounded-md border border-border px-2 py-1 text-[11px] font-semibold transition"
+                        :class="getSessionStatus(session) === 'skipped' ? 'bg-rose-600 text-white border-rose-600' : 'bg-white text-zinc-700 hover:bg-zinc-100'"
+                        @click="setSessionStatus(session, 'skipped')"
+                      >
+                        {{ t('statusSkipped') }}
+                      </button>
+                      <button
+                        type="button"
+                        class="rounded-md border border-border px-2 py-1 text-[11px] font-semibold transition"
+                        :class="getSessionStatus(session) === 'moved' ? 'bg-amber-500 text-white border-amber-500' : 'bg-white text-zinc-700 hover:bg-zinc-100'"
+                        @click="setSessionStatus(session, 'moved')"
+                      >
+                        {{ t('statusMoved') }}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </article>

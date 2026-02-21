@@ -18,11 +18,11 @@ const props = withDefaults(defineProps<Props>(), {
 
 const classes = computed(() =>
   cn(
-    'inline-flex items-center justify-center gap-2 rounded-xl font-semibold tracking-tight transition focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:pointer-events-none disabled:opacity-60',
+    'inline-flex items-center justify-center gap-2 rounded-xl font-semibold tracking-tight transition focus:outline-none focus:ring-2 focus:ring-primary/35 disabled:pointer-events-none disabled:opacity-60',
     props.variant === 'default' && 'bg-primary text-primary-foreground shadow-soft hover:-translate-y-px hover:brightness-110',
-    props.variant === 'secondary' && 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
-    props.variant === 'outline' && 'border border-border bg-card hover:bg-muted/70',
-    props.variant === 'ghost' && 'hover:bg-muted/80',
+    props.variant === 'secondary' && 'bg-secondary text-secondary-foreground border border-border/70 hover:bg-secondary/80',
+    props.variant === 'outline' && 'border border-border bg-card/40 text-foreground hover:bg-muted/60',
+    props.variant === 'ghost' && 'text-foreground hover:bg-muted/70',
     props.size === 'default' && 'h-10 px-4 text-sm',
     props.size === 'sm' && 'h-9 px-3 text-xs',
     props.size === 'lg' && 'h-11 px-5 text-[15px]',

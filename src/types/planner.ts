@@ -2,6 +2,7 @@ export type RaceType = 'marathon' | 'half-marathon' | '10k' | '5k' | 'custom'
 export type AppLocale = 'nl' | 'en' | 'fr'
 
 export type PlanMode = 'date' | 'weeks'
+export type SessionStatus = 'planned' | 'done' | 'skipped' | 'moved'
 
 export interface PlannerForm {
   raceType: RaceType
@@ -19,6 +20,7 @@ export interface TrainingSession {
   weekday: string
   title: string
   type: 'easy' | 'recovery' | 'tempo' | 'interval' | 'long' | 'race'
+  status?: SessionStatus
   distanceKm: number
   pace: string
   description: string

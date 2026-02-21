@@ -47,7 +47,7 @@ const value = computed({
     :placeholder="placeholder"
     :class="
       cn(
-        'h-10 w-full rounded-xl border border-border bg-white px-3 text-sm font-medium outline-none transition focus:border-zinc-500 focus:ring-2 focus:ring-zinc-300',
+        'h-10 w-full rounded-xl border border-border bg-card/40 px-3 text-sm font-medium text-foreground placeholder:text-muted-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/35',
         $props.class,
       )
     "
