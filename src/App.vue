@@ -21,6 +21,7 @@ const savePlanName = ref('')
 const currentLocale = ref<AppLocale>(getLocaleFromUrl())
 const importFileInput = ref<HTMLInputElement | null>(null)
 const hasManualEdits = ref(false)
+const dayEditorElement = ref<HTMLElement | null>(null)
 const canInstallPwa = ref(false)
 const isAppInstalled = ref(false)
 const deferredInstallPrompt = ref<BeforeInstallPromptEvent | null>(null)
@@ -869,9 +870,15 @@ function deleteSessionForSelectedDay() {
   hasManualEdits.value = true
 }
 
-function selectExportCell(weekNumber: number, dayIndex: number) {
+async function selectExportCell(weekNumber: number, dayIndex: number) {
   selectedWeekNumber.value = weekNumber
   selectedDayIndex.value = Math.max(0, Math.min(6, dayIndex))
+
+  await nextTick()
+  dayEditorElement.value?.scrollIntoView({
+    behavior: 'smooth',
+    block: 'start',
+  })
 }
 
 function isSelectedExportCell(weekNumber: number, dayIndex: number) {
@@ -1628,7 +1635,7 @@ onBeforeUnmount(() => {
               </div>
             </div>
 
-            <div class="mt-4 rounded-xl border border-border/80 bg-white/80 p-4">
+            <div ref="dayEditorElement" class="mt-4 rounded-xl border border-border/80 bg-white/80 p-4">
               <h3 class="text-sm font-bold uppercase tracking-[0.08em] text-foreground">{{ t('editorTitle') }}</h3>
               <p class="mt-1 text-xs text-muted-foreground">{{ t('editorHint') }}</p>
 
