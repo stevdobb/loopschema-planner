@@ -96,6 +96,8 @@ const labels = computed(() => {
       secondHalf: 'Second half',
       targetTime: 'Target time',
       splitPace: 'Split pace',
+      overallPace: 'Overall pace',
+      averageSpeed: 'Average speed',
       split: 'Split #',
       splitTime: 'Split time',
       cumulative: 'Cumulative time',
@@ -103,6 +105,7 @@ const labels = computed(() => {
       halfway: 'Halfway',
       customDistance: 'Custom distance',
       customDistancePlaceholder: 'E.g. 15.5',
+      quickTime: 'Quick time',
     }
   }
 
@@ -123,6 +126,8 @@ const labels = computed(() => {
       secondHalf: 'Deuxieme moitie',
       targetTime: 'Temps cible',
       splitPace: 'Allure split',
+      overallPace: 'Allure moyenne',
+      averageSpeed: 'Vitesse moyenne',
       split: 'Split #',
       splitTime: 'Temps split',
       cumulative: 'Temps cumule',
@@ -130,6 +135,7 @@ const labels = computed(() => {
       halfway: 'Mi-course',
       customDistance: 'Distance perso',
       customDistancePlaceholder: 'Ex. 15,5',
+      quickTime: 'Temps rapide',
     }
   }
 
@@ -149,6 +155,8 @@ const labels = computed(() => {
     secondHalf: 'Tweede helft',
     targetTime: 'Doeltijd',
     splitPace: 'Split tempo',
+    overallPace: 'Gemiddeld tempo',
+    averageSpeed: 'Gemiddelde snelheid',
     split: 'Split #',
     splitTime: 'Split tijd',
     cumulative: 'Cumulatieve tijd',
@@ -156,6 +164,7 @@ const labels = computed(() => {
     halfway: 'Halverwege',
     customDistance: 'Eigen afstand',
     customDistancePlaceholder: 'Bijv. 15,5',
+    quickTime: 'Snelle tijd',
   }
 })
 
@@ -204,6 +213,8 @@ const distanceUnitTotal = computed(() => {
 })
 
 const totalTimeSeconds = computed(() => (targetHours.value * 3600) + (targetMinutes.value * 60) + targetSeconds.value)
+const overallPaceSeconds = computed(() => totalTimeSeconds.value / Math.max(distanceUnitTotal.value, 0.001))
+const averageSpeed = computed(() => (distanceUnitTotal.value / Math.max(totalTimeSeconds.value, 1)) * 3600)
 
 function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value))
@@ -220,6 +231,10 @@ function setTimeFromTotal(seconds: number) {
 function adjustTime(part: 'hours' | 'minutes' | 'seconds', delta: number) {
   const scale = part === 'hours' ? 3600 : part === 'minutes' ? 60 : 1
   setTimeFromTotal(totalTimeSeconds.value + delta * scale)
+}
+
+function applyQuickTime(hours: number, minutes: number) {
+  setTimeFromTotal(hours * 3600 + minutes * 60)
 }
 
 function formatDuration(valueSeconds: number) {
@@ -344,6 +359,20 @@ function handleCustomDistanceInput(event: Event) {
           {{ labels.back }}
         </Button>
       </div>
+      <div class="mt-4 grid gap-2 sm:grid-cols-3">
+        <div class="metric-pill">
+          <p class="metric-label">{{ labels.distance }}</p>
+          <p class="metric-value">{{ distanceUnitTotal.toFixed(3).replace(/\.?0+$/, '') }} {{ distanceUnitSuffix }}</p>
+        </div>
+        <div class="metric-pill">
+          <p class="metric-label">{{ labels.overallPace }}</p>
+          <p class="metric-value">{{ formatPace(overallPaceSeconds) }}</p>
+        </div>
+        <div class="metric-pill">
+          <p class="metric-label">{{ labels.averageSpeed }}</p>
+          <p class="metric-value">{{ new Intl.NumberFormat(localeTag, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(averageSpeed) }} {{ speedSuffix }}</p>
+        </div>
+      </div>
     </Card>
 
     <div class="grid gap-4 xl:grid-cols-[minmax(0,46%),minmax(0,54%)]">
@@ -387,6 +416,13 @@ function handleCustomDistanceInput(event: Event) {
 
         <Card class="pace-panel p-4">
           <p class="mb-3 text-sm font-semibold text-muted-foreground">{{ labels.targetTime }}</p>
+          <div class="mb-3 flex flex-wrap items-center gap-2">
+            <span class="text-xs font-semibold text-muted-foreground">{{ labels.quickTime }}:</span>
+            <button type="button" class="quick-time-btn" @click="applyQuickTime(3, 0)">3:00</button>
+            <button type="button" class="quick-time-btn" @click="applyQuickTime(3, 30)">3:30</button>
+            <button type="button" class="quick-time-btn" @click="applyQuickTime(4, 0)">4:00</button>
+            <button type="button" class="quick-time-btn" @click="applyQuickTime(4, 30)">4:30</button>
+          </div>
           <div class="grid grid-cols-3 gap-3">
             <div class="time-col">
               <button type="button" class="time-adjust" @click="adjustTime('hours', 1)"><ArrowUp class="h-4 w-4" /></button>
@@ -435,7 +471,7 @@ function handleCustomDistanceInput(event: Event) {
       </div>
 
       <Card class="pace-panel p-0">
-        <div class="overflow-x-auto">
+        <div class="max-h-[900px] overflow-auto">
           <table class="pace-table min-w-[760px]">
             <thead>
               <tr>
@@ -470,6 +506,46 @@ function handleCustomDistanceInput(event: Event) {
 .pace-header-card,
 .pace-panel {
   border-color: rgba(148, 163, 184, 0.25);
+}
+
+.metric-pill {
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 0.85rem;
+  padding: 0.6rem 0.72rem;
+  background: rgba(255, 255, 255, 0.66);
+}
+
+.metric-label {
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgb(113 113 122);
+  font-weight: 700;
+}
+
+.metric-value {
+  margin-top: 0.2rem;
+  font-size: 1rem;
+  font-weight: 800;
+  color: rgb(24 24 27);
+}
+
+.quick-time-btn {
+  border: 1px solid rgba(148, 163, 184, 0.32);
+  border-radius: 9999px;
+  padding: 0.2rem 0.58rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.4;
+  color: rgb(63 63 70);
+  background: rgba(255, 255, 255, 0.72);
+  transition: all 0.18s ease;
+}
+
+.quick-time-btn:hover {
+  border-color: rgba(59, 130, 246, 0.42);
+  background: rgba(59, 130, 246, 0.12);
+  color: #1d4ed8;
 }
 
 .time-col {
@@ -535,6 +611,10 @@ function handleCustomDistanceInput(event: Event) {
   background: rgba(248, 250, 252, 0.65);
 }
 
+.pace-table tbody tr:nth-child(odd) {
+  background: rgba(255, 255, 255, 0.5);
+}
+
 .pace-row-highlight {
   color: #1d4ed8;
   font-weight: 700;
@@ -546,27 +626,98 @@ function handleCustomDistanceInput(event: Event) {
   border-color: rgba(156, 205, 255, 0.34);
 }
 
+:global(.theme-weather) .pace-header-card .text-foreground,
+:global(.theme-weather) .pace-panel .text-foreground {
+  color: #f4f9ff !important;
+}
+
+:global(.theme-weather) .pace-header-card .text-muted-foreground,
+:global(.theme-weather) .pace-panel .text-muted-foreground {
+  color: #cde4ff !important;
+}
+
+:global(.theme-weather) .pace-panel select,
+:global(.theme-weather) .pace-panel input[type='number'],
+:global(.theme-weather) .pace-panel input[type='text'],
+:global(.theme-weather) .pace-panel input[type='range'] {
+  background: rgba(13, 70, 141, 0.7) !important;
+  border-color: rgba(163, 209, 255, 0.45) !important;
+  color: #f4f9ff !important;
+}
+
+:global(.theme-weather) .pace-panel select option {
+  color: #0f2f57;
+  background: #dbeafe;
+}
+
+:global(.theme-weather) .pace-panel input::placeholder {
+  color: rgba(214, 231, 255, 0.85);
+}
+
+:global(.theme-weather) .metric-pill {
+  background: rgba(12, 66, 133, 0.72);
+  border-color: rgba(170, 214, 255, 0.45);
+}
+
+:global(.theme-weather) .metric-label,
+:global(.theme-weather) .metric-value {
+  color: #f4f9ff;
+}
+
+:global(.theme-weather) .quick-time-btn {
+  background: rgba(11, 66, 132, 0.76);
+  border-color: rgba(171, 215, 255, 0.48);
+  color: #f4f9ff;
+}
+
+:global(.theme-weather) .quick-time-btn:hover {
+  background: rgba(37, 99, 235, 0.62);
+  border-color: rgba(191, 219, 254, 0.62);
+  color: #ffffff;
+}
+
 :global(.theme-weather) .time-adjust {
-  color: #eaf3ff;
-  border-color: rgba(156, 205, 255, 0.38);
-  background: rgba(17, 84, 161, 0.45);
+  color: #f4f9ff;
+  border-color: rgba(171, 215, 255, 0.45);
+  background: rgba(13, 70, 141, 0.72);
+}
+
+:global(.theme-weather) .time-adjust:hover {
+  background: rgba(37, 99, 235, 0.5);
+  border-color: rgba(191, 219, 254, 0.65);
 }
 
 :global(.theme-weather) .half-card {
-  background: rgba(17, 84, 161, 0.44);
-  border-color: rgba(156, 205, 255, 0.32);
+  background: rgba(12, 66, 133, 0.74);
+  border-color: rgba(170, 214, 255, 0.45);
+}
+
+:global(.theme-weather) .time-value {
+  color: #f8fbff;
 }
 
 :global(.theme-weather) .pace-table th {
-  background: rgba(14, 63, 124, 0.96);
+  background: rgba(9, 48, 99, 0.98);
+  color: #f8fbff;
+  border-bottom-color: rgba(173, 215, 255, 0.38);
+}
+
+:global(.theme-weather) .pace-table td {
+  color: #edf6ff;
+  border-bottom-color: rgba(159, 205, 255, 0.25);
+}
+
+:global(.theme-weather) .pace-table tbody tr:nth-child(odd) {
+  background: rgba(10, 58, 118, 0.56);
 }
 
 :global(.theme-weather) .pace-table tbody tr:nth-child(even) {
-  background: rgba(17, 84, 161, 0.34);
+  background: rgba(13, 70, 141, 0.56);
 }
 
 :global(.theme-weather) .pace-row-highlight {
-  color: #bfdbfe;
+  color: #dbeafe;
+  background: rgba(37, 99, 235, 0.26) !important;
 }
 
 @media (max-width: 880px) {

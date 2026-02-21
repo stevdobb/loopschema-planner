@@ -2,7 +2,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
-import { Calendar, Download, Expand, FileImage, FileText, FolderOpen, Goal, Moon, Printer, RefreshCcw, Save, Sun, Timer, Trash2, X } from 'lucide-vue-next'
+import { Calendar, Download, Expand, FileImage, FileText, FolderOpen, Goal, Moon, Printer, RefreshCcw, Save, Sun, Trash2, X } from 'lucide-vue-next'
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
 import DatePicker from '@/components/ui/DatePicker.vue'
@@ -1634,10 +1634,6 @@ onBeforeUnmount(() => {
             {{ t('appBadge') }}
           </p>
           <div class="flex items-center gap-2">
-            <Button type="button" variant="outline" size="sm" @click="navigateToRoute(isPaceCalculatorRoute ? 'planner' : 'pace-calculator')">
-              <Timer class="h-4 w-4" />
-              {{ isPaceCalculatorRoute ? t('planner') : t('paceCalculator') }}
-            </Button>
             <Button
               v-if="canInstallPwa && !isAppInstalled"
               type="button"
@@ -1672,6 +1668,24 @@ onBeforeUnmount(() => {
         <p class="mt-4 max-w-3xl text-sm font-semibold leading-relaxed text-muted-foreground md:text-base">
           {{ t('appSubtitle') }}
         </p>
+        <nav class="mt-5 flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            class="hero-nav-item"
+            :class="{ 'hero-nav-item-active': !isPaceCalculatorRoute }"
+            @click="navigateToRoute('planner')"
+          >
+            {{ t('planner') }}
+          </button>
+          <button
+            type="button"
+            class="hero-nav-item"
+            :class="{ 'hero-nav-item-active': isPaceCalculatorRoute }"
+            @click="navigateToRoute('pace-calculator')"
+          >
+            {{ t('paceCalculator') }}
+          </button>
+        </nav>
       </header>
 
       <PaceCalculatorView
@@ -1681,7 +1695,7 @@ onBeforeUnmount(() => {
       />
 
       <div v-else class="grid items-start gap-6 lg:grid-cols-[380px,minmax(0,1fr)] print:block">
-        <Card class="h-fit p-5 print:hidden lg:sticky lg:top-6">
+        <Card id="planner-settings" class="h-fit p-5 print:hidden lg:sticky lg:top-6">
           <h2 class="mb-4 text-xl font-semibold">{{ t('settings') }}</h2>
 
           <div class="space-y-4">
@@ -1779,7 +1793,7 @@ onBeforeUnmount(() => {
         </Card>
 
         <section>
-          <Card class="mb-4 overflow-hidden border-border/90 bg-gradient-to-br from-[#1b5cae]/80 to-[#134f9f]/75 p-5 shadow-[0_16px_38px_-24px_rgba(3,21,51,0.72)] print:hidden">
+          <Card id="planner-saved" class="mb-4 overflow-hidden border-border/90 bg-gradient-to-br from-[#1b5cae]/80 to-[#134f9f]/75 p-5 shadow-[0_16px_38px_-24px_rgba(3,21,51,0.72)] print:hidden">
             <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
               <h2 class="text-2xl font-bold">{{ t('savedPlans') }}</h2>
               <span class="rounded-full bg-zinc-900 px-3 py-1 text-xs font-bold text-white">
@@ -1860,7 +1874,7 @@ onBeforeUnmount(() => {
             </div>
           </Card>
 
-          <Card v-if="planner.plan" class="mb-4 p-5 print:hidden">
+          <Card v-if="planner.plan" id="planner-summary" class="mb-4 p-5 print:hidden">
             <h2 class="mb-3 text-2xl font-bold">{{ t('planSummary') }}</h2>
             <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               <div v-for="row in summaryRows" :key="row.label" class="rounded-xl border border-border/70 bg-secondary/60 px-3 py-2">
