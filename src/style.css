@@ -278,7 +278,7 @@
 
 @media print {
   @page {
-    size: A4 landscape;
+    size: A4 portrait;
     margin: 4mm;
   }
 
@@ -345,20 +345,20 @@
   }
 
   body.print-target-table #printable-plan-section .export-table thead th {
-    padding: 4px 2px;
-    font-size: 7px;
+    padding: 6px 4px;
+    font-size: 9px;
     background: #3f3f46 !important;
     color: #fff !important;
   }
 
   body.print-target-table #printable-plan-section .export-table .cell-title {
-    font-size: 6px;
-    padding: 2px 1px;
+    font-size: 8px;
+    padding: 3px 2px;
   }
 
   body.print-target-table #printable-plan-section .export-table .cell-date {
-    font-size: 6px;
-    padding: 1px;
+    font-size: 8px;
+    padding: 2px;
   }
 
   body.print-target-table .print-no-table,
@@ -377,41 +377,51 @@
   }
 
   .export-table .cell-value {
-    font-size: 6px;
-    min-height: 18px;
-    padding: 2px 1px;
+    font-size: 9px;
+    min-height: 30px;
+    padding: 4px 2px;
   }
 
   .export-table .week-end-date,
   .export-table .week-km {
-    font-size: 7px;
+    font-size: 10px;
   }
 
   .export-table .week-number {
-    font-size: 8px;
+    font-size: 11px;
   }
 
   .export-table .separator-row td {
-    height: 2px;
+    height: 4px;
   }
 
-  body.print-target-table.print-table-readable .export-table .cell-value {
+  body.print-target-table.print-table-compact .export-table .cell-value {
     font-size: 7px;
     min-height: 22px;
     padding: 3px 2px;
   }
 
-  body.print-target-table.print-table-readable .export-table .week-end-date,
-  body.print-target-table.print-table-readable .export-table .week-km {
+  body.print-target-table.print-table-compact .export-table .week-end-date,
+  body.print-target-table.print-table-compact .export-table .week-km {
     font-size: 8px;
   }
 
-  body.print-target-table.print-table-readable .export-table .week-number {
+  body.print-target-table.print-table-compact .export-table .week-number {
     font-size: 9px;
   }
 
-  body.print-target-table.print-table-readable #printable-plan-section .export-table thead th {
+  body.print-target-table.print-table-compact #printable-plan-section .export-table thead th {
     font-size: 8px;
     padding: 5px 3px;
+  }
+
+  body.print-target-table.print-table-compact #printable-plan-section .export-table .cell-title {
+    font-size: 7px;
+    padding: 2px 1px;
+  }
+
+  body.print-target-table.print-table-compact #printable-plan-section .export-table .cell-date {
+    font-size: 7px;
+    padding: 1px;
   }
 }

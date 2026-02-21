@@ -418,7 +418,7 @@ const selectedDayIndex = ref(0)
 const editType = ref<TrainingSession['type']>('easy')
 const editDistanceKm = ref<number>(8)
 const editDescription = ref('')
-const printTableMode = ref<PrintTableMode>('compact')
+const printTableMode = ref<PrintTableMode>('readable')
 
 const todayISO = computed(() => {
   const now = new Date()
@@ -1202,7 +1202,7 @@ async function downloadPdf() {
 
   try {
     const canvas = await capturePlanCanvas()
-    const pdf = new jsPDF('l', 'mm', 'a4')
+    const pdf = new jsPDF('p', 'mm', 'a4')
     const pageWidth = pdf.internal.pageSize.getWidth()
     const pageHeight = pdf.internal.pageSize.getHeight()
     const margin = 10
@@ -1247,8 +1247,8 @@ function setTablePrintScale() {
   }
 
   const pxPerMm = 96 / 25.4
-  const pageWidthPx = 297 * pxPerMm
-  const pageHeightPx = 210 * pxPerMm
+  const pageWidthPx = 210 * pxPerMm
+  const pageHeightPx = 297 * pxPerMm
   const marginMm = 4
   const availableWidth = pageWidthPx - marginMm * 2 * pxPerMm
   const availableHeight = pageHeightPx - marginMm * 2 * pxPerMm
