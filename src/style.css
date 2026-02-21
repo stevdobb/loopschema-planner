@@ -370,7 +370,22 @@
     color: var(--sheet-ink) !important;
   }
 
+  .export-force-light .app-shell .export-sheet {
+    --sheet-bg: #f5f5f5;
+    --sheet-head: #3f3f46;
+    --sheet-head-muted: #52525b;
+    --sheet-line: #d4d4d8;
+    --sheet-ink: #27272a;
+    background: var(--sheet-bg) !important;
+    color: var(--sheet-ink) !important;
+  }
+
   .theme-light .app-shell .export-table .week-row td {
+    background: #f6f6f7 !important;
+    border-right: 1px solid #d4d4d8 !important;
+  }
+
+  .export-force-light .app-shell .export-table .week-row td {
     background: #f6f6f7 !important;
     border-right: 1px solid #d4d4d8 !important;
   }
@@ -379,12 +394,27 @@
     background: #52525b !important;
   }
 
+  .export-force-light .app-shell .export-table .separator-row td {
+    background: #52525b !important;
+  }
+
   .theme-light .app-shell .export-table .cell-title {
     background: #52525b !important;
     color: #ffffff !important;
   }
 
+  .export-force-light .app-shell .export-table .cell-title {
+    background: #52525b !important;
+    color: #ffffff !important;
+  }
+
   .theme-light .app-shell .export-table .cell-date {
+    background: #efeff2 !important;
+    color: #52525b !important;
+    border-bottom: 1px solid #d8d8dc !important;
+  }
+
+  .export-force-light .app-shell .export-table .cell-date {
     background: #efeff2 !important;
     color: #52525b !important;
     border-bottom: 1px solid #d8d8dc !important;

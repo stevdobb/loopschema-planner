@@ -2,12 +2,13 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
-import { Calendar, Download, Expand, FileImage, FileText, FolderOpen, Goal, Moon, Printer, RefreshCcw, Save, Sun, Trash2, X } from 'lucide-vue-next'
+import { Calendar, Download, Expand, FileImage, FileText, FolderOpen, Goal, Moon, Printer, RefreshCcw, Save, Sun, Timer, Trash2, X } from 'lucide-vue-next'
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
 import DatePicker from '@/components/ui/DatePicker.vue'
 import Input from '@/components/ui/Input.vue'
 import Label from '@/components/ui/Label.vue'
+import PaceCalculatorView from '@/components/PaceCalculatorView.vue'
 import { getLocaleFromUrl, isAppLocale, syncLocaleInUrl } from '@/lib/i18n'
 import { formatDateLong, formatGoalTime, formatPaceValue, isValidISODate } from '@/lib/planner'
 import { usePlannerStore } from '@/stores/planner'
@@ -27,6 +28,7 @@ const canInstallPwa = ref(false)
 const isAppInstalled = ref(false)
 const deferredInstallPrompt = ref<BeforeInstallPromptEvent | null>(null)
 const appTheme = ref<'light' | 'weather'>('weather')
+const currentPath = ref(typeof window !== 'undefined' ? window.location.pathname : '/')
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>
@@ -39,6 +41,8 @@ const messages = {
     appBadge: 'Training Planner',
     appTitle: 'Marathon & Running Planner',
     appSubtitle: 'Vul je doeltijd, wedstrijddatum of aantal trainingsweken in en krijg automatisch een planning.',
+    planner: 'Planner',
+    paceCalculator: 'Pace calculator',
     settings: 'Instellingen',
     language: 'Taal',
     theme: 'Thema',
@@ -153,6 +157,8 @@ const messages = {
     appBadge: 'Training Planner',
     appTitle: 'Marathon & Running Planner',
     appSubtitle: 'Enter your goal time, race date or number of training weeks and get an automatic plan.',
+    planner: 'Planner',
+    paceCalculator: 'Pace calculator',
     settings: 'Settings',
     language: 'Language',
     theme: 'Theme',
@@ -267,6 +273,8 @@ const messages = {
     appBadge: 'Planificateur Running',
     appTitle: 'Planificateur Marathon & Running',
     appSubtitle: 'Entre ton objectif, la date de course ou le nombre de semaines et recois un plan automatique.',
+    planner: 'Planificateur',
+    paceCalculator: 'Calculateur d allure',
     settings: 'Parametres',
     language: 'Langue',
     theme: 'Theme',
@@ -405,6 +413,52 @@ const isDarkTheme = computed(() => appTheme.value === 'weather')
 
 function toggleTheme() {
   appTheme.value = appTheme.value === 'weather' ? 'light' : 'weather'
+}
+
+function stripSlashes(value: string) {
+  return value.replace(/^\/+|\/+$/g, '')
+}
+
+function appBaseSegments() {
+  const base = typeof import.meta !== 'undefined' ? import.meta.env.BASE_URL || '/' : '/'
+  return stripSlashes(base).split('/').filter(Boolean)
+}
+
+function appPathTailSegments(pathname: string) {
+  const parts = pathname.split('/').filter(Boolean)
+  return parts.slice(appBaseSegments().length)
+}
+
+function hasLocaleInPath(pathname: string) {
+  const tail = appPathTailSegments(pathname)
+  return isAppLocale(tail[0] || '')
+}
+
+function routeFromPath(pathname: string) {
+  const tail = appPathTailSegments(pathname)
+  const routeSegment = isAppLocale(tail[0] || '') ? (tail[1] || '') : (tail[0] || '')
+  return routeSegment === 'pace-calculator' ? 'pace-calculator' : 'planner'
+}
+
+function pathForRoute(route: 'planner' | 'pace-calculator') {
+  const base = appBaseSegments()
+  const tail = route === 'pace-calculator' ? [currentLocale.value, 'pace-calculator'] : [currentLocale.value]
+  return `/${[...base, ...tail].join('/')}`.replace(/\/+/g, '/')
+}
+
+const isPaceCalculatorRoute = computed(() => routeFromPath(currentPath.value) === 'pace-calculator')
+
+function navigateToRoute(route: 'planner' | 'pace-calculator') {
+  if (route === 'planner') {
+    closePreviewModal()
+  }
+
+  const nextPath = pathForRoute(route)
+  const url = new URL(window.location.href)
+  if (nextPath !== url.pathname) {
+    window.history.pushState({}, '', `${nextPath}${url.search}${url.hash}`)
+  }
+  currentPath.value = nextPath
 }
 
 const raceOptions = computed<{ label: string; value: RaceType }[]>(() => {
@@ -1284,13 +1338,21 @@ function exportCellClass(type: ExportCell['type']) {
   return ''
 }
 
-async function capturePlanCanvas() {
+function setExportForceLight(enabled: boolean) {
+  document.documentElement.classList.toggle('export-force-light', enabled)
+}
+
+async function capturePlanCanvas(forceLight = false) {
   if (!planner.plan) {
     throw new Error(t('generateBeforeExport'))
   }
 
   if (!exportElement.value) {
     throw new Error(t('noExportElement'))
+  }
+
+  if (forceLight) {
+    setExportForceLight(true)
   }
 
   isExporting.value = true
@@ -1303,6 +1365,9 @@ async function capturePlanCanvas() {
       scrollY: -window.scrollY,
     })
   } finally {
+    if (forceLight) {
+      setExportForceLight(false)
+    }
     isExporting.value = false
   }
 }
@@ -1311,7 +1376,7 @@ async function downloadImage() {
   localError.value = ''
 
   try {
-    const canvas = await capturePlanCanvas()
+    const canvas = await capturePlanCanvas(true)
     const link = document.createElement('a')
     link.download = `${t('fileNameBase')}-${todayISO.value}.png`
     link.href = canvas.toDataURL('image/png')
@@ -1392,6 +1457,7 @@ function setTablePrintScale() {
 function clearPrintTargetClass() {
   document.body.classList.remove('print-target-table', 'print-target-list')
   document.documentElement.style.removeProperty('--print-table-scale')
+  setExportForceLight(false)
 }
 
 async function printPlan(target: PrintTarget) {
@@ -1407,6 +1473,7 @@ async function printPlan(target: PrintTarget) {
   setPrintTargetClass(target)
   await nextTick()
   if (target === 'table') {
+    setExportForceLight(true)
     setTablePrintScale()
   }
   window.print()
@@ -1430,6 +1497,7 @@ function handleWindowKeydown(event: KeyboardEvent) {
 }
 
 function handlePopState() {
+  currentPath.value = window.location.pathname
   const locale = getLocaleFromUrl()
   if (locale !== currentLocale.value) {
     currentLocale.value = locale
@@ -1500,6 +1568,7 @@ watch(selectedSession, (session) => {
 watch(currentLocale, (locale, previousLocale) => {
   document.documentElement.lang = locale
   syncLocaleInUrl(locale, !previousLocale)
+  currentPath.value = window.location.pathname
   window.localStorage.setItem('loopschema-locale', locale)
 
   if (planner.plan && !hasManualEdits.value) {
@@ -1518,9 +1587,7 @@ watch(appTheme, (theme) => {
 })
 
 onMounted(() => {
-  const pathParts = window.location.pathname.split('/').filter(Boolean)
-  const possibleLocale = pathParts[pathParts.length - 1]
-  const hasLocaleInUrl = isAppLocale(possibleLocale)
+  const hasLocaleInUrl = hasLocaleInPath(window.location.pathname)
   const storedLocale = window.localStorage.getItem('loopschema-locale')
 
   if (!hasLocaleInUrl && isAppLocale(storedLocale)) {
@@ -1534,6 +1601,7 @@ onMounted(() => {
   applyTheme(appTheme.value)
   document.documentElement.lang = currentLocale.value
   syncLocaleInUrl(currentLocale.value, true)
+  currentPath.value = window.location.pathname
   isAppInstalled.value =
     window.matchMedia('(display-mode: standalone)').matches ||
     (typeof navigator !== 'undefined' && 'standalone' in navigator && Boolean((navigator as Navigator & { standalone?: boolean }).standalone))
@@ -1566,6 +1634,10 @@ onBeforeUnmount(() => {
             {{ t('appBadge') }}
           </p>
           <div class="flex items-center gap-2">
+            <Button type="button" variant="outline" size="sm" @click="navigateToRoute(isPaceCalculatorRoute ? 'planner' : 'pace-calculator')">
+              <Timer class="h-4 w-4" />
+              {{ isPaceCalculatorRoute ? t('planner') : t('paceCalculator') }}
+            </Button>
             <Button
               v-if="canInstallPwa && !isAppInstalled"
               type="button"
@@ -1602,7 +1674,13 @@ onBeforeUnmount(() => {
         </p>
       </header>
 
-      <div class="grid items-start gap-6 lg:grid-cols-[380px,minmax(0,1fr)] print:block">
+      <PaceCalculatorView
+        v-if="isPaceCalculatorRoute"
+        :locale="currentLocale"
+        @back-to-planner="navigateToRoute('planner')"
+      />
+
+      <div v-else class="grid items-start gap-6 lg:grid-cols-[380px,minmax(0,1fr)] print:block">
         <Card class="h-fit p-5 print:hidden lg:sticky lg:top-6">
           <h2 class="mb-4 text-xl font-semibold">{{ t('settings') }}</h2>
 
@@ -2092,7 +2170,7 @@ onBeforeUnmount(() => {
     </div>
 
     <Teleport to="body">
-      <div v-if="isPreviewModalOpen" class="modal-overlay">
+      <div v-if="isPreviewModalOpen && !isPaceCalculatorRoute" class="modal-overlay">
         <button class="modal-backdrop" :aria-label="t('closeModal')" @click="closePreviewModal" />
         <section class="modal-panel">
           <header class="modal-panel-header">
