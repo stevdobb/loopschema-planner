@@ -233,19 +233,22 @@ function savedAtLabel(createdAtISO: string) {
 }
 
 function typeBadgeClass(type: TrainingSession['type']) {
-  if (type === 'easy') return 'bg-zinc-100 text-zinc-800'
-  if (type === 'recovery') return 'bg-slate-100 text-slate-800'
-  if (type === 'tempo') return 'bg-stone-100 text-stone-800'
-  if (type === 'interval') return 'bg-gray-200 text-gray-800'
-  if (type === 'long') return 'bg-neutral-200 text-neutral-800'
-  return 'bg-zinc-200 text-zinc-800'
+  if (type === 'easy') return 'bg-emerald-100 text-emerald-900'
+  if (type === 'recovery') return 'bg-cyan-100 text-cyan-900'
+  if (type === 'tempo') return 'bg-amber-100 text-amber-900'
+  if (type === 'interval') return 'bg-sky-100 text-sky-900'
+  if (type === 'long') return 'bg-violet-100 text-violet-900'
+  return 'bg-rose-100 text-rose-900'
 }
 
 function exportCellClass(type: ExportCell['type']) {
-  if (type === 'race') return 'bg-zinc-300/80 text-zinc-900'
-  if (type === 'interval') return 'bg-slate-300/70 text-slate-900'
-  if (type === 'tempo') return 'bg-gray-300/70 text-gray-900'
-  if (type === 'rest') return 'bg-stone-100 text-stone-700'
+  if (type === 'easy') return 'bg-emerald-200/75 text-emerald-950'
+  if (type === 'recovery') return 'bg-cyan-200/75 text-cyan-950'
+  if (type === 'tempo') return 'bg-amber-200/75 text-amber-950'
+  if (type === 'interval') return 'bg-sky-200/75 text-sky-950'
+  if (type === 'long') return 'bg-violet-200/75 text-violet-950'
+  if (type === 'race') return 'bg-rose-300/80 text-rose-950'
+  if (type === 'rest') return 'bg-zinc-100 text-zinc-700'
   return ''
 }
 
