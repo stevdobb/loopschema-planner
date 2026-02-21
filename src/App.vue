@@ -21,6 +21,14 @@ const savePlanName = ref('')
 const currentLocale = ref<AppLocale>(getLocaleFromUrl())
 const importFileInput = ref<HTMLInputElement | null>(null)
 const hasManualEdits = ref(false)
+const canInstallPwa = ref(false)
+const isAppInstalled = ref(false)
+const deferredInstallPrompt = ref<BeforeInstallPromptEvent | null>(null)
+
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>
+}
 
 const messages = {
   nl: {
@@ -30,6 +38,7 @@ const messages = {
     appSubtitle: 'Vul je doeltijd, wedstrijddatum of aantal trainingsweken in en krijg automatisch een planning.',
     settings: 'Instellingen',
     language: 'Taal',
+    installApp: 'Installeer app',
     targetDistance: 'Doelafstand',
     customDistance: 'Eigen afstand (km)',
     customDistancePlaceholder: 'Bijv. 15',
@@ -127,6 +136,7 @@ const messages = {
     appSubtitle: 'Enter your goal time, race date or number of training weeks and get an automatic plan.',
     settings: 'Settings',
     language: 'Language',
+    installApp: 'Install app',
     targetDistance: 'Target distance',
     customDistance: 'Custom distance (km)',
     customDistancePlaceholder: 'E.g. 15',
@@ -224,6 +234,7 @@ const messages = {
     appSubtitle: 'Entre ton objectif, la date de course ou le nombre de semaines et recois un plan automatique.',
     settings: 'Parametres',
     language: 'Langue',
+    installApp: 'Installer app',
     targetDistance: 'Distance cible',
     customDistance: 'Distance perso (km)',
     customDistancePlaceholder: 'Ex. 15',
@@ -925,6 +936,14 @@ function deleteSavedPlanEntry(planId: string) {
   planner.deleteSavedPlan(planId)
 }
 
+function escapeIcsText(value: string) {
+  return value
+    .replace(/\\/g, '\\\\')
+    .replace(/\n/g, '\\n')
+    .replace(/,/g, '\\,')
+    .replace(/;/g, '\\;')
+}
+
 function exportCurrentPlanToJson() {
   localError.value = ''
   if (!planner.plan) {
@@ -945,6 +964,61 @@ function exportCurrentPlanToJson() {
     const link = document.createElement('a')
     link.href = url
     link.download = `${t('fileNameBase')}-${todayISO.value}.json`
+    link.click()
+    URL.revokeObjectURL(url)
+  } catch (error) {
+    localError.value = error instanceof Error ? error.message : t('exportFailed')
+  }
+}
+
+function downloadIcs() {
+  localError.value = ''
+  if (!planner.plan) {
+    localError.value = t('generateBeforeExport')
+    return
+  }
+
+  try {
+    const nowStamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z')
+    const events: string[] = []
+
+    planner.plan.weeks.forEach((week) => {
+      week.sessions.forEach((session) => {
+        const startDate = session.dateISO.replace(/-/g, '')
+        const endDate = addDays(session.dateISO, 1).replace(/-/g, '')
+        const summary = `${session.title} (${session.distanceKm} km)`
+        const description = `${t('pace')}: ${session.pace}\\n${session.description}`
+
+        events.push(
+          'BEGIN:VEVENT',
+          `UID:${escapeIcsText(`${session.id}-${session.dateISO}@loopschema-planner`)}`,
+          `DTSTAMP:${nowStamp}`,
+          `DTSTART;VALUE=DATE:${startDate}`,
+          `DTEND;VALUE=DATE:${endDate}`,
+          `SUMMARY:${escapeIcsText(summary)}`,
+          `DESCRIPTION:${escapeIcsText(description)}`,
+          `CATEGORIES:${escapeIcsText(sessionTypeLabel(session.type))}`,
+          'END:VEVENT',
+        )
+      })
+    })
+
+    const calendar = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//loopschema-planner//training-plan//EN',
+      'CALSCALE:GREGORIAN',
+      'METHOD:PUBLISH',
+      ...events,
+      'END:VCALENDAR',
+      '',
+    ].join('\r\n')
+
+    const blob = new Blob([calendar], { type: 'text/calendar;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `${t('fileNameBase')}-${todayISO.value}.ics`
     link.click()
     URL.revokeObjectURL(url)
   } catch (error) {
@@ -1144,6 +1218,34 @@ function handlePopState() {
   }
 }
 
+function handleBeforeInstallPrompt(event: Event) {
+  const installEvent = event as BeforeInstallPromptEvent
+  installEvent.preventDefault()
+  deferredInstallPrompt.value = installEvent
+  canInstallPwa.value = true
+}
+
+function handleAppInstalled() {
+  isAppInstalled.value = true
+  canInstallPwa.value = false
+  deferredInstallPrompt.value = null
+}
+
+async function installPwa() {
+  if (!deferredInstallPrompt.value) {
+    return
+  }
+
+  await deferredInstallPrompt.value.prompt()
+  const choiceResult = await deferredInstallPrompt.value.userChoice
+  if (choiceResult.outcome !== 'accepted') {
+    return
+  }
+
+  canInstallPwa.value = false
+  deferredInstallPrompt.value = null
+}
+
 watch(isPreviewModalOpen, (open) => {
   document.body.classList.toggle('modal-open', open)
 })
@@ -1192,9 +1294,15 @@ watch(currentLocale, (locale, previousLocale) => {
 onMounted(() => {
   document.documentElement.lang = currentLocale.value
   syncLocaleInUrl(currentLocale.value, true)
+  isAppInstalled.value =
+    window.matchMedia('(display-mode: standalone)').matches ||
+    (typeof navigator !== 'undefined' && 'standalone' in navigator && Boolean((navigator as Navigator & { standalone?: boolean }).standalone))
+  canInstallPwa.value = false
   window.addEventListener('keydown', handleWindowKeydown)
   window.addEventListener('afterprint', clearPrintTargetClass)
   window.addEventListener('popstate', handlePopState)
+  window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+  window.addEventListener('appinstalled', handleAppInstalled)
 })
 
 onBeforeUnmount(() => {
@@ -1203,6 +1311,8 @@ onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleWindowKeydown)
   window.removeEventListener('afterprint', clearPrintTargetClass)
   window.removeEventListener('popstate', handlePopState)
+  window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+  window.removeEventListener('appinstalled', handleAppInstalled)
 })
 </script>
 
@@ -1216,6 +1326,17 @@ onBeforeUnmount(() => {
             {{ t('appBadge') }}
           </p>
           <div class="flex items-center gap-2">
+            <Button
+              v-if="canInstallPwa && !isAppInstalled"
+              type="button"
+              class="install-btn h-9 px-3 text-xs"
+              @click="installPwa"
+            >
+              <span class="install-btn-icon">
+                <Download class="h-3.5 w-3.5" />
+              </span>
+              {{ t('installApp') }}
+            </Button>
             <select
               v-model="currentLocale"
               class="h-9 rounded-lg border border-border bg-white px-3 text-xs font-semibold uppercase outline-none transition focus:border-zinc-500 focus:ring-2 focus:ring-zinc-300"
@@ -1422,6 +1543,10 @@ onBeforeUnmount(() => {
               <Button type="button" variant="outline" :disabled="isExporting" @click="downloadImage">
                 <FileImage class="h-4 w-4" />
                 {{ t('downloadImage') }}
+              </Button>
+              <Button type="button" variant="outline" @click="downloadIcs">
+                <Calendar class="h-4 w-4" />
+                {{ t('downloadIcs') }}
               </Button>
               <Button type="button" variant="secondary" @click="printPlan('table')">
                 <Printer class="h-4 w-4" />

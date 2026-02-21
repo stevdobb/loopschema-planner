@@ -1,0 +1,19 @@
+{
+  "name": "LoopSchema Planner",
+  "short_name": "LoopSchema",
+  "description": "Multilingual running plan builder with export/import and calendar support.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f8fafc",
+  "theme_color": "#1d4ed8",
+  "icons": [
+    {
+      "src": "./pwa-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

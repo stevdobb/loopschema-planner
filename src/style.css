@@ -50,6 +50,28 @@
     backdrop-filter: blur(4px);
   }
 
+  .install-btn {
+    border: 1px solid rgba(30, 64, 175, 0.24);
+    color: #fff;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    background: linear-gradient(130deg, #2563eb, #0ea5e9);
+    box-shadow: 0 12px 22px -16px rgba(37, 99, 235, 0.7);
+  }
+
+  .install-btn:hover {
+    filter: brightness(1.05);
+  }
+
+  .install-btn-icon {
+    display: inline-grid;
+    place-items: center;
+    width: 1.15rem;
+    height: 1.15rem;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.2);
+  }
+
   .modal-overlay {
     position: fixed;
     inset: 0;
