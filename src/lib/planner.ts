@@ -1,6 +1,10 @@
-import type { PlannerForm, RaceType, TrainingPlan, TrainingSession, TrainingWeek } from '@/types/planner'
+import type { AppLocale, PlannerForm, RaceType, TrainingPlan, TrainingSession, TrainingWeek } from '@/types/planner'
 
-const WEEKDAY_NL = ['Zondag', 'Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag'] as const
+const WEEKDAY_LABELS: Record<AppLocale, readonly string[]> = {
+  nl: ['Zondag', 'Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag'],
+  en: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+  fr: ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'],
+}
 
 const DAY_PATTERNS: Record<number, number[]> = {
   2: [2, 6],
@@ -11,12 +15,28 @@ const DAY_PATTERNS: Record<number, number[]> = {
   7: [0, 1, 2, 3, 4, 5, 6],
 }
 
-const RACE_LABELS: Record<RaceType, string> = {
-  marathon: 'Marathon',
-  'half-marathon': 'Halve Marathon',
-  '10k': '10 km',
-  '5k': '5 km',
-  custom: 'Custom afstand',
+const RACE_LABELS: Record<AppLocale, Record<RaceType, string>> = {
+  nl: {
+    marathon: 'Marathon',
+    'half-marathon': 'Halve Marathon',
+    '10k': '10 km',
+    '5k': '5 km',
+    custom: 'Eigen afstand',
+  },
+  en: {
+    marathon: 'Marathon',
+    'half-marathon': 'Half Marathon',
+    '10k': '10 km',
+    '5k': '5 km',
+    custom: 'Custom distance',
+  },
+  fr: {
+    marathon: 'Marathon',
+    'half-marathon': 'Semi-marathon',
+    '10k': '10 km',
+    '5k': '5 km',
+    custom: 'Distance personnalisee',
+  },
 }
 
 type WeekPhase = 'base' | 'build' | 'peak' | 'recovery' | 'taper' | 'race'
@@ -250,7 +270,57 @@ function getWeekLoadProfile(phase: WeekPhase, weeksToRace: number): WeekLoadProf
   }
 }
 
-function weeklyFocus(phase: WeekPhase, weeksToRace: number) {
+function weeklyFocus(phase: WeekPhase, weeksToRace: number, locale: AppLocale) {
+  if (locale === 'en') {
+    if (phase === 'race') {
+      return 'Race week: sharply reduce volume, keep legs fresh, and arrive at the start with confidence.'
+    }
+    if (phase === 'taper') {
+      if (weeksToRace <= 1) {
+        return 'Final taper week: short and light stimuli with plenty of recovery so you start fully rested.'
+      }
+      if (weeksToRace === 2) {
+        return 'Taper week: clearly cut volume, keep quality short, and prioritize recovery.'
+      }
+      return 'Early taper: controlled reduction in training load while keeping rhythm.'
+    }
+    if (phase === 'recovery') {
+      return 'Recovery week: lower volume so you can come back stronger.'
+    }
+    if (phase === 'peak') {
+      return 'Peak block: race-specific sessions with controlled high load.'
+    }
+    if (phase === 'base') {
+      return 'Build the base: easy kilometers, technique, and consistent routine.'
+    }
+    return 'Build phase: more quality around tempo and interval with gradual volume increase.'
+  }
+
+  if (locale === 'fr') {
+    if (phase === 'race') {
+      return "Semaine de course: reduis fortement le volume, garde des jambes fraiches et arrive confiant au depart."
+    }
+    if (phase === 'taper') {
+      if (weeksToRace <= 1) {
+        return "Derniere semaine d'affutage: stimuli courts et legers avec beaucoup de recuperation pour arriver repose."
+      }
+      if (weeksToRace === 2) {
+        return "Semaine d'affutage: reduis clairement le volume, garde la qualite courte et priorise la recuperation."
+      }
+      return 'Affutage precoce: baisse controlee de la charge tout en gardant le rythme.'
+    }
+    if (phase === 'recovery') {
+      return 'Semaine de recuperation: moins de volume pour revenir plus fort.'
+    }
+    if (phase === 'peak') {
+      return "Bloc de pic: seances specifiques course avec une charge elevee controlee."
+    }
+    if (phase === 'base') {
+      return 'Construction de base: kilometres faciles, technique et regularite.'
+    }
+    return 'Phase de progression: plus de qualite tempo et intervalle avec hausse graduelle du volume.'
+  }
+
   if (phase === 'race') {
     return 'Raceweek: volume sterk omlaag, benen fris houden en vertrouwen meenemen naar de start.'
   }
@@ -280,7 +350,45 @@ function weeklyFocus(phase: WeekPhase, weeksToRace: number) {
   return 'Opbouw: meer kwaliteit rond tempo en interval met geleidelijke volumestijging.'
 }
 
-function sessionDescription(type: TrainingSession['type'], distanceKm: number, raceLabel: string) {
+function sessionDescription(type: TrainingSession['type'], distanceKm: number, raceLabel: string, locale: AppLocale) {
+  if (locale === 'en') {
+    if (type === 'easy') {
+      return `Easy run of ${distanceKm} km. Keep a conversational pace and focus on relaxed form, cadence, and breathing.`
+    }
+    if (type === 'recovery') {
+      return `Recovery run of ${distanceKm} km. Run very easy, keep heart rate low, and actively recover from harder workouts.`
+    }
+    if (type === 'tempo') {
+      return `Tempo workout of ${distanceKm} km including warm-up and cool-down. Run the core near target race pace to improve lactate tolerance.`
+    }
+    if (type === 'interval') {
+      return `Interval session totaling ${distanceKm} km. Start with 10-15 min warm-up, then short faster repeats with easy recoveries.`
+    }
+    if (type === 'long') {
+      return `Long run of ${distanceKm} km. Practice your fueling plan and keep the pace controlled to build endurance.`
+    }
+    return `${raceLabel} race day. Start controlled, hold steady pacing, and finish stronger if you still have energy left.`
+  }
+
+  if (locale === 'fr') {
+    if (type === 'easy') {
+      return `Sortie facile de ${distanceKm} km. Reste en aisance respiratoire et travaille la foullee, la cadence et la respiration.`
+    }
+    if (type === 'recovery') {
+      return `Sortie recuperation de ${distanceKm} km. Cours tres doucement, garde une frequence cardiaque basse et recupere activement.`
+    }
+    if (type === 'tempo') {
+      return `Seance tempo de ${distanceKm} km avec echauffement et retour au calme. Le bloc principal est proche de l'allure cible course.`
+    }
+    if (type === 'interval') {
+      return `Seance fractionnee de ${distanceKm} km au total. Commence par 10-15 min d'echauffement puis des repetitions rapides avec recuperation facile.`
+    }
+    if (type === 'long') {
+      return `Sortie longue de ${distanceKm} km. Teste ton plan d'hydratation/alimentation et garde une allure controlee pour l'endurance.`
+    }
+    return `Jour de course ${raceLabel}. Pars prudemment, garde un rythme regulier et accelere a la fin si tu en as encore.`
+  }
+
   if (type === 'easy') {
     return `Rustige duurloop van ${distanceKm} km. Praattempo aanhouden en focussen op ontspannen loopstijl, cadans en ademhaling.`
   }
@@ -300,7 +408,25 @@ function sessionDescription(type: TrainingSession['type'], distanceKm: number, r
   return `${raceLabel} wedstrijddag. Rustig starten, pacing strak houden en het laatste deel gecontroleerd versnellen als je nog over hebt.`
 }
 
-function sessionTitle(type: TrainingSession['type']) {
+function sessionTitle(type: TrainingSession['type'], locale: AppLocale) {
+  if (locale === 'en') {
+    if (type === 'easy') return 'Easy run'
+    if (type === 'recovery') return 'Recovery run'
+    if (type === 'tempo') return 'Tempo run'
+    if (type === 'interval') return 'Interval training'
+    if (type === 'long') return 'Long run'
+    return 'Race'
+  }
+
+  if (locale === 'fr') {
+    if (type === 'easy') return 'Sortie facile'
+    if (type === 'recovery') return 'Sortie recuperation'
+    if (type === 'tempo') return 'Tempo'
+    if (type === 'interval') return 'Fractionne'
+    if (type === 'long') return 'Sortie longue'
+    return 'Course'
+  }
+
   if (type === 'easy') {
     return 'Easy run'
   }
@@ -410,14 +536,16 @@ function sessionPace(type: TrainingSession['type'], targetPace: number) {
   return formatPace(targetPace)
 }
 
-function raceName(raceType: RaceType, distanceKm: number) {
+function raceName(raceType: RaceType, distanceKm: number, locale: AppLocale) {
   if (raceType === 'custom') {
-    return `Custom race (${distanceKm} km)`
+    if (locale === 'en') return `Custom race (${distanceKm} km)`
+    if (locale === 'fr') return `Course personnalisee (${distanceKm} km)`
+    return `Eigen wedstrijd (${distanceKm} km)`
   }
-  return RACE_LABELS[raceType]
+  return RACE_LABELS[locale][raceType]
 }
 
-export function generatePlan(form: PlannerForm): TrainingPlan {
+export function generatePlan(form: PlannerForm, locale: AppLocale = 'nl'): TrainingPlan {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   const startDate = today
@@ -425,6 +553,12 @@ export function generatePlan(form: PlannerForm): TrainingPlan {
 
   const goalTimeMinutes = parseGoalTimeToMinutes(form.goalTime)
   if (!goalTimeMinutes || goalTimeMinutes <= 0) {
+    if (locale === 'en') {
+      throw new Error('Goal time is invalid. Use format hh:mm or hh:mm:ss (e.g. 03:45).')
+    }
+    if (locale === 'fr') {
+      throw new Error("Le temps objectif est invalide. Utilise le format hh:mm ou hh:mm:ss (ex. 03:45).")
+    }
     throw new Error('Doeltijd is ongeldig. Gebruik formaat uu:mm of uu:mm:ss (bijv. 03:45).')
   }
 
@@ -443,15 +577,21 @@ export function generatePlan(form: PlannerForm): TrainingPlan {
   let totalWeeks: number
   if (form.mode === 'date') {
     if (!form.raceDate) {
+      if (locale === 'en') throw new Error('Choose a race date or switch to training weeks.')
+      if (locale === 'fr') throw new Error('Choisis une date de course ou passe en mode semaines.')
       throw new Error('Kies een wedstrijddatum of schakel over naar trainingsweken.')
     }
     if (!isValidISODate(form.raceDate)) {
+      if (locale === 'en') throw new Error('Race date is invalid. Choose a valid date.')
+      if (locale === 'fr') throw new Error('La date de course est invalide. Choisis une date valide.')
       throw new Error('Wedstrijddatum is ongeldig. Kies een geldige datum.')
     }
 
     endDate = new Date(form.raceDate)
     endDate.setHours(0, 0, 0, 0)
     if (endDate <= today) {
+      if (locale === 'en') throw new Error('Race date must be after today.')
+      if (locale === 'fr') throw new Error("La date de course doit etre apres aujourd'hui.")
       throw new Error('Wedstrijddatum moet na vandaag liggen.')
     }
 
@@ -467,7 +607,7 @@ export function generatePlan(form: PlannerForm): TrainingPlan {
   const initialLong = clamp(roundToHalf(peakLong * 0.55), 5, peakLong - 2)
   const taperWeeks = getTaperWeeks(form.raceType, distanceKm, totalWeeks)
   const buildWeeks = Math.max(1, totalWeeks - taperWeeks - 1)
-  const raceLabel = raceName(form.raceType, roundToHalf(distanceKm))
+  const raceLabel = raceName(form.raceType, roundToHalf(distanceKm), locale)
 
   const sessionTypes = chooseSessionTypes(safeDaysPerWeek)
   const dayPattern = DAY_PATTERNS[safeDaysPerWeek]
@@ -502,12 +642,12 @@ export function generatePlan(form: PlannerForm): TrainingPlan {
       sessions.push({
         id: `${weekNumber}-${idx}-${adaptedType}`,
         dateISO: formatISO(trainingDate),
-        weekday: WEEKDAY_NL[trainingDate.getDay()],
-        title: sessionTitle(adaptedType),
+        weekday: WEEKDAY_LABELS[locale][trainingDate.getDay()],
+        title: sessionTitle(adaptedType, locale),
         type: adaptedType,
         distanceKm: distance,
         pace: sessionPace(adaptedType, targetPaceMinPerKm),
-        description: sessionDescription(adaptedType, distance, raceLabel),
+        description: sessionDescription(adaptedType, distance, raceLabel, locale),
       })
     })
 
@@ -523,12 +663,12 @@ export function generatePlan(form: PlannerForm): TrainingPlan {
       sessions.push({
         id: `${weekNumber}-race`,
         dateISO: raceDateISO,
-        weekday: WEEKDAY_NL[endDate.getDay()],
-        title: `Wedstrijd: ${raceName(form.raceType, raceDistance)}`,
+        weekday: WEEKDAY_LABELS[locale][endDate.getDay()],
+        title: locale === 'en' ? `Race: ${raceName(form.raceType, raceDistance, locale)}` : locale === 'fr' ? `Course: ${raceName(form.raceType, raceDistance, locale)}` : `Wedstrijd: ${raceName(form.raceType, raceDistance, locale)}`,
         type: 'race',
         distanceKm: raceDistance,
         pace: formatPace(targetPaceMinPerKm),
-        description: sessionDescription('race', raceDistance, raceName(form.raceType, raceDistance)),
+        description: sessionDescription('race', raceDistance, raceName(form.raceType, raceDistance, locale), locale),
       })
     }
 
@@ -540,7 +680,7 @@ export function generatePlan(form: PlannerForm): TrainingPlan {
       weekNumber,
       startDateISO: formatISO(weekStart),
       endDateISO: formatISO(weekEnd),
-      focus: weeklyFocus(phase, weeksToRace),
+      focus: weeklyFocus(phase, weeksToRace, locale),
       totalDistanceKm,
       sessions,
     })
@@ -566,13 +706,16 @@ export function formatGoalTime(minutes: number) {
   return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
 }
 
-export function formatDateLong(dateISO: string) {
+export function formatDateLong(dateISO: string, locale: AppLocale = 'nl') {
   if (!isValidISODate(dateISO)) {
+    if (locale === 'en') return 'Unknown date'
+    if (locale === 'fr') return 'Date inconnue'
     return 'Onbekende datum'
   }
 
   const date = new Date(dateISO)
-  return new Intl.DateTimeFormat('nl-NL', {
+  const localeTag = locale === 'en' ? 'en-GB' : locale === 'fr' ? 'fr-FR' : 'nl-NL'
+  return new Intl.DateTimeFormat(localeTag, {
     day: '2-digit',
     month: 'long',
     year: 'numeric',

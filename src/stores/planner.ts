@@ -2,7 +2,7 @@ import { computed } from 'vue'
 import { defineStore } from 'pinia'
 import { useStorage } from '@vueuse/core'
 import { generatePlan, isValidISODate } from '@/lib/planner'
-import type { PlannerForm, RaceType, SavedPlanEntry, TrainingPlan } from '@/types/planner'
+import type { AppLocale, PlannerForm, RaceType, SavedPlanEntry, TrainingPlan } from '@/types/planner'
 
 function defaultRaceDateISO() {
   const date = new Date()
@@ -20,6 +20,8 @@ const DEFAULT_FORM: PlannerForm = {
   trainingWeeks: 16,
   daysPerWeek: 4,
 }
+
+const INVALID_STORED_PLAN_ERROR = '__INVALID_STORED_PLAN_ERROR__'
 
 function deepClone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T
@@ -101,7 +103,7 @@ export const usePlannerStore = defineStore('planner', () => {
 
   if (plan.value && !isValidStoredPlan(plan.value)) {
     plan.value = null
-    lastError.value = 'Opgeslagen planning bevatte ongeldige datums en is verwijderd. Genereer een nieuw schema.'
+    lastError.value = INVALID_STORED_PLAN_ERROR
   }
 
   if (!Array.isArray(savedPlans.value)) {
@@ -115,23 +117,33 @@ export const usePlannerStore = defineStore('planner', () => {
 
   const hasPlan = computed(() => Boolean(plan.value && plan.value.weeks.length))
 
-  function generate() {
+  function fallbackGenerateError(locale: AppLocale) {
+    if (locale === 'en') return 'Unknown error while generating plan.'
+    if (locale === 'fr') return 'Erreur inconnue lors de la generation du plan.'
+    return 'Onbekende fout bij genereren van schema.'
+  }
+
+  function generate(locale: AppLocale = 'nl') {
     try {
-      plan.value = generatePlan(form.value)
+      plan.value = generatePlan(form.value, locale)
       lastError.value = ''
     } catch (error) {
-      lastError.value = error instanceof Error ? error.message : 'Onbekende fout bij genereren van schema.'
+      lastError.value = error instanceof Error ? error.message : fallbackGenerateError(locale)
       throw error
     }
   }
 
-  function saveCurrentPlan(name: string) {
+  function saveCurrentPlan(name: string, locale: AppLocale = 'nl') {
     if (!plan.value || !isValidStoredPlan(plan.value)) {
+      if (locale === 'en') throw new Error('Generate a plan before saving.')
+      if (locale === 'fr') throw new Error("Genere d'abord un plan avant d'enregistrer.")
       throw new Error('Genereer eerst een planning voordat je opslaat.')
     }
 
     const normalizedName = name.trim().replace(/\s+/g, ' ')
     if (!normalizedName) {
+      if (locale === 'en') throw new Error('Enter a name for the plan.')
+      if (locale === 'fr') throw new Error('Donne un nom au plan.')
       throw new Error('Geef een naam op voor de planning.')
     }
 
@@ -147,12 +159,16 @@ export const usePlannerStore = defineStore('planner', () => {
     lastError.value = ''
   }
 
-  function loadSavedPlan(planId: string) {
+  function loadSavedPlan(planId: string, locale: AppLocale = 'nl') {
     const entry = savedPlans.value.find((item) => item.id === planId)
     if (!entry) {
+      if (locale === 'en') throw new Error('Saved plan not found.')
+      if (locale === 'fr') throw new Error('Plan enregistre introuvable.')
       throw new Error('Opgeslagen planning niet gevonden.')
     }
     if (!isValidSavedPlanEntry(entry)) {
+      if (locale === 'en') throw new Error('Saved plan is invalid and cannot be loaded.')
+      if (locale === 'fr') throw new Error('Le plan enregistre est invalide et ne peut pas etre charge.')
       throw new Error('Opgeslagen planning is ongeldig en kan niet worden geladen.')
     }
 

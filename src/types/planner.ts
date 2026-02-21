@@ -1,4 +1,5 @@
 export type RaceType = 'marathon' | 'half-marathon' | '10k' | '5k' | 'custom'
+export type AppLocale = 'nl' | 'en' | 'fr'
 
 export type PlanMode = 'date' | 'weeks'
 
