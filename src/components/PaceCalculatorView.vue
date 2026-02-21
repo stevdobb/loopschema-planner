@@ -360,15 +360,15 @@ function handleCustomDistanceInput(event: Event) {
         </Button>
       </div>
       <div class="mt-4 grid gap-2 sm:grid-cols-3">
-        <div class="metric-pill">
+        <div class="metric-pill pace-metric-pill">
           <p class="metric-label">{{ labels.distance }}</p>
           <p class="metric-value">{{ distanceUnitTotal.toFixed(3).replace(/\.?0+$/, '') }} {{ distanceUnitSuffix }}</p>
         </div>
-        <div class="metric-pill">
+        <div class="metric-pill pace-metric-pill">
           <p class="metric-label">{{ labels.overallPace }}</p>
           <p class="metric-value">{{ formatPace(overallPaceSeconds) }}</p>
         </div>
-        <div class="metric-pill">
+        <div class="metric-pill pace-metric-pill">
           <p class="metric-label">{{ labels.averageSpeed }}</p>
           <p class="metric-value">{{ new Intl.NumberFormat(localeTag, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(averageSpeed) }} {{ speedSuffix }}</p>
         </div>
@@ -452,14 +452,14 @@ function handleCustomDistanceInput(event: Event) {
           </div>
 
           <div class="mt-4 grid gap-3 sm:grid-cols-2">
-            <div class="half-card">
+            <div class="half-card pace-half-card">
               <p class="text-sm font-semibold text-muted-foreground">{{ labels.firstHalf }}</p>
               <p class="mt-1 text-xs text-muted-foreground">{{ (firstHalfShare * 100).toFixed(1) }}%</p>
               <p class="mt-3 text-xl font-bold text-foreground">{{ labels.splitPace }}</p>
               <p class="mt-1 text-sm font-semibold text-foreground">{{ formatPace(firstHalfPaceSeconds) }}</p>
               <p class="mt-3 text-xs text-muted-foreground">{{ formatDuration(firstHalfTimeSeconds) }}</p>
             </div>
-            <div class="half-card">
+            <div class="half-card pace-half-card">
               <p class="text-sm font-semibold text-muted-foreground">{{ labels.secondHalf }}</p>
               <p class="mt-1 text-xs text-muted-foreground">{{ (100 - firstHalfShare * 100).toFixed(1) }}%</p>
               <p class="mt-3 text-xl font-bold text-foreground">{{ labels.splitPace }}</p>
@@ -622,7 +622,7 @@ function handleCustomDistanceInput(event: Event) {
 
 :global(.theme-weather) .pace-panel,
 :global(.theme-weather) .pace-header-card {
-  background: rgba(18, 79, 152, 0.58);
+  background: rgba(4, 25, 56, 0.96);
   border-color: rgba(156, 205, 255, 0.34);
 }
 
@@ -640,9 +640,9 @@ function handleCustomDistanceInput(event: Event) {
 :global(.theme-weather) .pace-panel input[type='number'],
 :global(.theme-weather) .pace-panel input[type='text'],
 :global(.theme-weather) .pace-panel input[type='range'] {
-  background: rgba(13, 70, 141, 0.7) !important;
-  border-color: rgba(163, 209, 255, 0.45) !important;
-  color: #f4f9ff !important;
+  background: rgba(3, 21, 46, 0.96) !important;
+  border-color: rgba(163, 209, 255, 0.52) !important;
+  color: #f8fbff !important;
 }
 
 :global(.theme-weather) .pace-panel select option {
@@ -655,18 +655,24 @@ function handleCustomDistanceInput(event: Event) {
 }
 
 :global(.theme-weather) .metric-pill {
-  background: rgba(12, 66, 133, 0.72);
-  border-color: rgba(170, 214, 255, 0.45);
+  background: linear-gradient(165deg, rgba(3, 21, 46, 0.98), rgba(5, 30, 64, 0.98));
+  border-color: rgba(170, 214, 255, 0.56);
+  box-shadow: inset 0 1px 0 rgba(210, 231, 255, 0.12);
+}
+
+:global(.theme-weather) .pace-metric-pill {
+  background: linear-gradient(165deg, rgba(2, 17, 40, 0.99), rgba(4, 25, 56, 0.99)) !important;
+  border-color: rgba(170, 214, 255, 0.62) !important;
 }
 
 :global(.theme-weather) .metric-label,
 :global(.theme-weather) .metric-value {
-  color: #f4f9ff;
+  color: #f8fbff;
 }
 
 :global(.theme-weather) .quick-time-btn {
-  background: rgba(11, 66, 132, 0.76);
-  border-color: rgba(171, 215, 255, 0.48);
+  background: rgba(3, 21, 46, 0.96);
+  border-color: rgba(171, 215, 255, 0.52);
   color: #f4f9ff;
 }
 
@@ -677,9 +683,9 @@ function handleCustomDistanceInput(event: Event) {
 }
 
 :global(.theme-weather) .time-adjust {
-  color: #f4f9ff;
-  border-color: rgba(171, 215, 255, 0.45);
-  background: rgba(13, 70, 141, 0.72);
+  color: #f8fbff;
+  border-color: rgba(171, 215, 255, 0.55);
+  background: rgba(3, 21, 46, 0.96);
 }
 
 :global(.theme-weather) .time-adjust:hover {
@@ -688,8 +694,22 @@ function handleCustomDistanceInput(event: Event) {
 }
 
 :global(.theme-weather) .half-card {
-  background: rgba(12, 66, 133, 0.74);
-  border-color: rgba(170, 214, 255, 0.45);
+  background: linear-gradient(160deg, rgba(3, 21, 46, 0.98), rgba(5, 30, 64, 0.98));
+  border-color: rgba(170, 214, 255, 0.56);
+  box-shadow: inset 0 1px 0 rgba(210, 231, 255, 0.12);
+}
+
+:global(.theme-weather) .pace-half-card {
+  background: linear-gradient(160deg, rgba(2, 17, 40, 0.99), rgba(4, 25, 56, 0.99)) !important;
+  border-color: rgba(170, 214, 255, 0.6) !important;
+}
+
+:global(.theme-weather) .half-card .text-muted-foreground {
+  color: #cfe6ff !important;
+}
+
+:global(.theme-weather) .half-card .text-foreground {
+  color: #f8fbff !important;
 }
 
 :global(.theme-weather) .time-value {
@@ -697,27 +717,27 @@ function handleCustomDistanceInput(event: Event) {
 }
 
 :global(.theme-weather) .pace-table th {
-  background: rgba(9, 48, 99, 0.98);
-  color: #f8fbff;
-  border-bottom-color: rgba(173, 215, 255, 0.38);
+  background: #082248 !important;
+  color: #f8fbff !important;
+  border-bottom-color: rgba(173, 215, 255, 0.42);
 }
 
 :global(.theme-weather) .pace-table td {
-  color: #edf6ff;
-  border-bottom-color: rgba(159, 205, 255, 0.25);
+  color: #f8fbff !important;
+  border-bottom-color: rgba(159, 205, 255, 0.3);
 }
 
 :global(.theme-weather) .pace-table tbody tr:nth-child(odd) {
-  background: rgba(10, 58, 118, 0.56);
+  background: rgba(4, 30, 66, 0.98);
 }
 
 :global(.theme-weather) .pace-table tbody tr:nth-child(even) {
-  background: rgba(13, 70, 141, 0.56);
+  background: rgba(6, 38, 82, 0.98);
 }
 
 :global(.theme-weather) .pace-row-highlight {
-  color: #dbeafe;
-  background: rgba(37, 99, 235, 0.26) !important;
+  color: #ffffff !important;
+  background: rgba(16, 77, 161, 0.96) !important;
 }
 
 @media (max-width: 880px) {
